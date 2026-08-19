@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deliveroo Captain — تطبيق المندوب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241A2E;
+    --paper:#FBF6EF;
+    --paper-2:#F3EAE0;
+    --pomegranate:#D64550;
+    --saffron:#F2A93B;
+    --mint:#3FA796;
+    --line:rgba(36,26,46,.12);
+    --muted:#6E6376;
+    --white:#fff;
+    --radius:18px;
+    --shadow: 0 10px 30px -12px rgba(36,26,46,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Tajawal',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{font-family:'Cairo',sans-serif;}
+  button{font-family:inherit; cursor:pointer;}
+
+  /* ---------- Login screen ---------- */
+  .login-screen{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:30px; text-align:center;
+  }
+  .login-screen .logo{font-size:2.4rem; margin-bottom:6px;}
+  .login-screen h1{font-size:1.4rem; margin:0 0 4px;}
+  .login-screen p{color:rgba(251,246,239,.65); font-size:.85rem; margin:0 0 28px;}
+  .login-screen input{
+    width:100%; max-width:320px; border:1.5px solid rgba(251,246,239,.2); border-radius:14px;
+    padding:14px 16px; background:rgba(251,246,239,.06); color:var(--paper); font-family:inherit;
+    font-size:.95rem; margin-bottom:14px; outline:none; text-align:center;
+  }
+  .login-screen input::placeholder{color:rgba(251,246,239,.4);}
+  .login-screen button{
+    width:100%; max-width:320px; background:var(--mint); color:#fff; border:none; border-radius:14px;
+    padding:14px; font-weight:700; font-size:.95rem;
+  }
+
+  /* ---------- Main app ---------- */
+  .app-shell{display:none;}
+  .app-shell.visible{display:block;}
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(135deg, #2E2140, var(--ink));
+    padding:16px 18px 18px; border-radius:0 0 22px 22px; box-shadow:var(--shadow);
+  }
+  .topbar-row{display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:8px; font-family:'Cairo',sans-serif; font-weight:800; font-size:1.05rem;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--mint);}
+  .driver-name{font-size:.78rem; color:rgba(251,246,239,.7); margin-top:2px;}
+  .status-pill{
+    display:flex; align-items:center; gap:6px; background:rgba(251,246,239,.1); border:none; color:var(--paper);
+    border-radius:20px; padding:8px 14px; font-size:.78rem; font-weight:700;
+  }
+  .status-pill.online{background:rgba(63,167,150,.25); color:#8FDFCB;}
+  .status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--mint);}
+  .status-pill.offline .dot{background:var(--muted);}
+
+  .stats-row{display:flex; gap:10px; margin-top:16px;}
+  .stat-card{flex:1; background:rgba(251,246,239,.08); border-radius:14px; padding:12px; text-align:center;}
+  .stat-card b{display:block; font-size:1.3rem; font-family:'Cairo',sans-serif;}
+  .stat-card span{font-size:.7rem; color:rgba(251,246,239,.6);}
+
+  .tabs{display:flex; gap:8px; padding:16px 18px 8px;}
+  .tab-btn{
+    flex:1; background:rgba(251,246,239,.06); border:1.5px solid transparent; color:rgba(251,246,239,.6);
+    border-radius:12px; padding:10px; font-size:.82rem; font-weight:700;
+  }
+  .tab-btn.active{background:var(--paper); color:var(--ink); border-color:var(--paper);}
+
+  .section{padding:6px 18px 90px;}
+
+  .order-card{
+    background:rgba(251,246,239,.06); border:1.5px solid rgba(251,246,239,.1); border-radius:18px;
+    padding:16px; margin-bottom:12px;
+  }
+  .order-card .oc-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .order-card .oc-head h4{margin:0; font-size:1rem; font-family:'Cairo',sans-serif;}
+  .order-card .oc-id{font-size:.72rem; color:rgba(251,246,239,.5); background:rgba(251,246,239,.08); padding:3px 8px; border-radius:8px;}
+  .order-card .oc-items{font-size:.82rem; color:rgba(251,246,239,.75); line-height:1.6; margin-bottom:12px;}
+  .order-card .oc-meta{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .badge{font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:8px;}
+  .badge.status{background:rgba(242,169,63,.2); color:var(--saffron);}
+  .badge.custom{background:rgba(214,69,80,.2); color:#F4909A;}
+
+  .btn-row{display:flex; gap:8px;}
+  .btn-primary{
+    flex:1; background:var(--mint); color:#fff; border:none; border-radius:12px;
+    padding:12px; font-weight:700; font-size:.85rem;
+  }
+  .btn-secondary{
+    background:rgba(251,246,239,.08); color:var(--paper); border:none; border-radius:12px;
+    padding:12px 16px; font-weight:700; font-size:.85rem;
+  }
+
+  .empty-state{text-align:center; padding:50px 20px; color:rgba(251,246,239,.5); font-size:.85rem; line-height:1.7;}
+  .empty-state .ic{font-size:2.2rem; display:block; margin-bottom:10px;}
+
+  .toast{
+    position:fixed; bottom:24px; right:50%; transform:translateX(50%);
+    background:var(--paper); color:var(--ink); padding:12px 22px; border-radius:12px;
+    font-size:.85rem; font-weight:700; z-index:200; opacity:0; pointer-events:none; transition:.25s;
+    box-shadow:var(--shadow);
+  }
+  .toast.show{opacity:1; transform:translateX(50%) translateY(-6px);}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<meta name="theme-color" content="#241A2E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Captain">
+<link rel="apple-touch-icon" href="icon-512.svg">
+<link rel="icon" href="icon-512.svg">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- ---------- Login ---------- -->
+<div class="login-screen" id="loginScreen">
+  <div style="margin-bottom:14px;">
+    <svg width="170" height="52" viewBox="0 0 260 60" dir="ltr" style="direction:ltr;">
+      <defs><clipPath id="beeDrvLogin"><ellipse cx="34" cy="30" rx="17" ry="10.5"/></clipPath></defs>
+      <line x1="0" y1="38" x2="10" y2="38" stroke="var(--mint)" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+      <line x1="2" y1="44" x2="9" y2="44" stroke="var(--mint)" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+      <ellipse cx="24" cy="22" rx="10" ry="6" fill="var(--paper)" opacity=".3" transform="rotate(-18 24 22)"/>
+      <ellipse cx="36" cy="20" rx="10" ry="6" fill="var(--paper)" opacity=".25" transform="rotate(12 36 20)"/>
+      <ellipse cx="34" cy="30" rx="17" ry="10.5" fill="var(--paper)"/>
+      <g clip-path="url(#beeDrvLogin)">
+        <rect x="24" y="19" width="5.5" height="22" fill="var(--saffron)"/>
+        <rect x="36" y="19" width="5.5" height="22" fill="var(--saffron)"/>
+      </g>
+      <circle cx="16" cy="30" r="6.5" fill="var(--paper)"/>
+      <path d="M14 25 Q9 17 5 14" stroke="var(--paper)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M19 25 Q19 16 22 13" stroke="var(--paper)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M50 30 L58 30 L50 25 Z" fill="var(--paper)"/>
+      <text x="72" y="28" font-family="Cairo, sans-serif" font-weight="800" font-size="24" font-style="italic" fill="var(--paper)">Deliveroo</text>
+      <text x="74" y="44" font-family="Tajawal, sans-serif" font-weight="700" font-size="11" letter-spacing="4" fill="var(--saffron)">CAPTAIN</text>
+    </svg>
+  </div>
+  <h1>Deliveroo Captain</h1>
+  <p>تطبيق المندوبين — سجّل دخولك عشان تبدأ تستقبل الطلبات</p>
+  <input id="driverNameInput" placeholder="اسمك">
+  <input id="driverPhoneInput" placeholder="رقم الموبايل" style="margin-bottom:22px;">
+  <button onclick="driverLogin()">ابدأ الشفت</button>
+</div>
+
+<!-- ---------- Main app ---------- -->
+<div class="app-shell" id="appShell">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <div class="brand">
+          <svg width="34" height="22" viewBox="0 0 62 30" dir="ltr" style="direction:ltr; flex-shrink:0;">
+            <defs><clipPath id="beeDrv"><ellipse cx="34" cy="16" rx="15" ry="9"/></clipPath></defs>
+            <line x1="0" y1="22" x2="8" y2="22" stroke="var(--mint)" stroke-width="2.2" stroke-linecap="round" opacity=".7"/>
+            <line x1="2" y1="27" x2="8" y2="27" stroke="var(--mint)" stroke-width="2.2" stroke-linecap="round" opacity=".45"/>
+            <ellipse cx="25" cy="9" rx="9" ry="5" fill="var(--paper)" opacity=".32" transform="rotate(-18 25 9)"/>
+            <ellipse cx="36" cy="7" rx="9" ry="5" fill="var(--paper)" opacity=".26" transform="rotate(12 36 7)"/>
+            <ellipse cx="34" cy="16" rx="15" ry="9" fill="var(--paper)"/>
+            <g clip-path="url(#beeDrv)">
+              <rect x="25" y="6" width="4.8" height="20" fill="var(--saffron)"/>
+              <rect x="36" y="6" width="4.8" height="20" fill="var(--saffron)"/>
+            </g>
+            <circle cx="17" cy="16" r="5.6" fill="var(--paper)"/>
+            <path d="M15 11 Q11 4 7 2" stroke="var(--paper)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M20 11 Q20 4 23 1" stroke="var(--paper)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M49 16 L57 16 L49 11 Z" fill="var(--paper)"/>
+          </svg>
+          <span style="font-style:italic; letter-spacing:.3px;">Deliveroo <span style="font-size:.72rem; opacity:.7; font-style:normal;">Captain</span></span>
+        </div>
+        <div class="driver-name" id="driverNameDisplay"></div>
+      </div>
+      <button class="status-pill online" id="onlineToggle" onclick="toggleOnline()"><span class="dot"></span> متاح</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><b id="statAvailable">0</b><span>طلبات متاحة</span></div>
+      <div class="stat-card"><b id="statMine">0</b><span>طلباتي الحالية</span></div>
+      <div class="stat-card"><b id="statDone">0</b><span>تم تسليمها اليوم</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="available" onclick="switchTab('available')">طلبات متاحة</button>
+    <button class="tab-btn" data-tab="mine" onclick="switchTab('mine')">طلباتي</button>
+  </div>
+
+  <div class="section" id="ordersSection">
+    <div class="empty-state">جاري تحميل الطلبات...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // نفس مشروع Firebase بتاع تطبيق العميل — عشان الاتنين يشوفوا نفس الطلبات لايف
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcYku_xGf7_oOm7uchbj5WYSPWAbl2XcM",
+    authDomain: "deliveroo-app-994df.firebaseapp.com",
+    databaseURL: "https://deliveroo-app-994df-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "deliveroo-app-994df",
+    storageBucket: "deliveroo-app-994df.firebasestorage.app",
+    messagingSenderId: "1033005656970",
+    appId: "1:1033005656970:web:e8c18489ee21cfe422b673",
+  };
+  // ÙÙ ÙÙØªØ¨Ø© Firebase ÙØ´ Ø§ØªØ­ÙÙÙØª (ÙÙÙØ´ ÙØªØ Ø£Ù Ø§ÙØ¨ÙØ¦Ø© Ø¨ØªÙÙØ¹ Ø§ÙÙÙÙØ§Øª Ø§ÙØ®Ø§Ø±Ø¬ÙØ©)Ø ÙÙØ¶Ø­ Ø§ÙØ³Ø¨Ø¨ Ø¨Ø¯Ù ÙØ§ Ø§ÙØµÙØ­Ø© ØªÙÙ ÙÙ ØºÙØ± Ø±Ø³Ø§ÙØ©
+  if(typeof firebase === 'undefined'){
+    document.body.innerHTML = `
+      <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; font-family:Tajawal,sans-serif;">
+        <div style="font-size:2.4rem; margin-bottom:14px;">⚠️</div>
+        <h1 style="font-family:Cairo,sans-serif; font-size:1.2rem; margin:0 0 10px;">تعذر الاتصال بقاعدة البيانات</h1>
+        <p style="opacity:.65; font-size:.88rem; line-height:1.9; max-width:340px; margin:0;">
+          مكتبة Firebase مش اتحمّلت. تأكد إنك متصل بالإنترنت، ويفضّل تحمّل الملف على جهازك وتفتحه من متصفح عادي (زي Chrome) بدل المعاينة السريعة.
+        </p>
+      </div>`;
+    throw new Error('Firebase SDK failed to load');
+  }
+  firebase.initializeApp(firebaseConfig);
+  const fbDb = firebase.database();
+
+  const TRACK_STEPS = [
+    {label:'تم استلام الطلب', ic:'✅'},
+    {label:'جاري التحضير', ic:'👨‍🍳'},
+    {label:'المندوب في الطريق', ic:'🛵'},
+    {label:'تم التوصيل', ic:'🎉'},
+  ];
+
+  let driverId = null;
+  let driverName = '';
+  let activeTab = 'available';
+  let isOnline = true;
+  let ordersCache = {};
+  let ordersListenerRef = null;
+
+  function driverLogin(){
+    const name = document.getElementById('driverNameInput').value.trim();
+    const phone = document.getElementById('driverPhoneInput').value.trim();
+    if(!name || !phone){ showToast('اكتب الاسم ورقم الموبايل'); return; }
+    driverName = name;
+    // معرّف مؤقت للمندوب في الجلسة دي — في التطبيق الحقيقي ده هيكون عن طريق تسجيل دخول حقيقي (رقم موبايل + OTP)
+    driverId = 'drv_' + phone.replace(/\D/g, '').slice(-8) + '_' + Math.random().toString(36).slice(2, 6);
+    document.getElementById('driverNameDisplay').textContent = name + ' · ' + phone;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').classList.add('visible');
+    startListening();
+  }
+
+  function toggleOnline(){
+    isOnline = !isOnline;
+    const btn = document.getElementById('onlineToggle');
+    btn.classList.toggle('online', isOnline);
+    btn.classList.toggle('offline', !isOnline);
+    btn.innerHTML = isOnline ? '<span class="dot"></span> متاح' : '<span class="dot"></span> غير متاح';
+    showToast(isOnline ? 'أنت متاح لاستقبال الطلبات' : 'أنت غير متاح دلوقتي');
+  }
+
+  function startListening(){
+    ordersListenerRef = fbDb.ref('orders');
+    ordersListenerRef.on('value', snap => {
+      ordersCache = snap.val() || {};
+      renderStats();
+      renderOrders();
+    });
+  }
+
+  function renderStats(){
+    const entries = Object.entries(ordersCache);
+    const available = entries.filter(([id, o]) => o.step === 0 && !o.driverId).length;
+    const mine = entries.filter(([id, o]) => o.driverId === driverId && o.step < TRACK_STEPS.length - 1).length;
+    const done = entries.filter(([id, o]) => o.driverId === driverId && o.step >= TRACK_STEPS.length - 1).length;
+    document.getElementById('statAvailable').textContent = available;
+    document.getElementById('statMine').textContent = mine;
+    document.getElementById('statDone').textContent = done;
+  }
+
+  function switchTab(tab){
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    renderOrders();
+  }
+
+  function renderOrders(){
+    const section = document.getElementById('ordersSection');
+    const entries = Object.entries(ordersCache);
+
+    if(activeTab === 'available'){
+      const list = entries.filter(([id, o]) => o.step === 0 && !o.driverId);
+      if(!list.length){
+        section.innerHTML = `<div class="empty-state"><span class="ic">📭</span>مفيش طلبات متاحة دلوقتي.<br>هتوصلك إشعارات أول ما طلب جديد يظهر.</div>`;
+        return;
+      }
+      section.innerHTML = list.map(([id, o]) => orderCard(id, o, true)).join('');
+    } else {
+      const list = entries.filter(([id, o]) => o.driverId === driverId);
+      if(!list.length){
+        section.innerHTML = `<div class="empty-state"><span class="ic">🛵</span>لسه ماقبلتش أي طلب.<br>روح تبويب "طلبات متاحة" وابدأ.</div>`;
+        return;
+      }
+      list.sort((a, b) => (b[1].placedAt || 0) - (a[1].placedAt || 0));
+      section.innerHTML = list.map(([id, o]) => orderCard(id, o, false)).join('');
+    }
+  }
+
+  function orderCard(id, o, isAvailable){
+    const vendorName = o.custom ? 'طلب مخصوص' : (o.items[0] ? o.items[0].vendorName : '');
+    const itemsSummary = o.custom
+      ? o.items[0].item
+      : o.items.map(i => `${i.item} ×${i.qty}`).join('، ');
+    const isCustom = !!o.custom;
+    const currentLabel = TRACK_STEPS[o.step].label;
+    const nextLabel = TRACK_STEPS[o.step + 1] ? TRACK_STEPS[o.step + 1].label : null;
+    const delivered = o.step >= TRACK_STEPS.length - 1;
+
+    let actionHtml = '';
+    if(isAvailable){
+      actionHtml = `<div class="btn-row"><button class="btn-primary" onclick="acceptOrder('${id}')">قبول الطلب ✅</button></div>`;
+    } else if(!delivered){
+      actionHtml = `<div class="btn-row"><button class="btn-primary" onclick="advanceOrder('${id}')">${nextLabel} ➜</button></div>`;
+    } else {
+      actionHtml = `<div class="badge status" style="background:rgba(63,167,150,.2); color:#8FDFCB;">تم التسليم 🎉</div>`;
+    }
+
+    return `
+    <div class="order-card">
+      <div class="oc-head">
+        <h4>${vendorName}</h4>
+        <span class="oc-id">#${id.slice(-5)}</span>
+      </div>
+      <div class="oc-items">${itemsSummary}</div>
+      ${!isAvailable && o.customerPhone ? `<div style="font-size:.8rem; color:rgba(251,246,239,.75); margin-bottom:10px;">📱 <a href="tel:${o.customerPhone}" style="color:#8FDFCB; text-decoration:none;">${o.customerPhone}</a></div>` : ''}
+      <div class="oc-meta">
+        ${isCustom ? '<span class="badge custom">طلب مخصوص</span>' : ''}
+        ${!isAvailable ? `<span class="badge status">${currentLabel}</span>` : ''}
+      </div>
+      ${actionHtml}
+    </div>`;
+  }
+
+  function acceptOrder(orderId){
+    fbDb.ref('orders/' + orderId).update({
+      driverId: driverId,
+      driverName: driverName,
+      step: 1,
+    }).then(() => {
+      showToast('قبلت الطلب — روح جهّزه 🏍️');
+      switchTab('mine');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  function advanceOrder(orderId){
+    const order = ordersCache[orderId];
+    if(!order) return;
+    fbDb.ref('orders/' + orderId + '/step').set(order.step + 1).then(() => {
+      showToast(order.step + 1 >= TRACK_STEPS.length - 1 ? 'تم تسليم الطلب 🎉' : 'تم تحديث الحالة');
+    });
+  }
+
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>

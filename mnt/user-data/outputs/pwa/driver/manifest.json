@@ -1,0 +1,31 @@
+{
+  "name": "Deliveroo Captain",
+  "short_name": "Captain",
+  "description": "تطبيق مندوبي التوصيل — استقبل الطلبات ووصّلها",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#241A2E",
+  "theme_color": "#241A2E",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "food",
+    "shopping"
+  ],
+  "icons": [
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
