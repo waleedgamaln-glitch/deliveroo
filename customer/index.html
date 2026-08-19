@@ -283,6 +283,10 @@
     width:100%; max-width:320px; background:var(--ink); color:var(--paper); border:none; border-radius:14px;
     padding:14px; font-weight:700; font-size:.92rem;
   }
+  .ghost-btn{
+    background:none; border:1.5px solid var(--line); color:var(--muted); border-radius:14px;
+    padding:12px; font-weight:700; font-size:.86rem;
+  }
   .theme-choice-row{display:flex; gap:14px; margin-bottom:24px;}
   .theme-choice{
     width:130px; border:2px solid var(--line); border-radius:16px; padding:18px 10px;
@@ -301,8 +305,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Deliveroo">
-<link rel="apple-touch-icon" href="icon-512.svg">
-<link rel="icon" href="icon-512.svg">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png" type="image/png">
+<link rel="icon" href="icon-512.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.json">
 </head>
 <body data-theme="male">
@@ -910,10 +915,16 @@
   function openCustomRequest(){ openSheet('customSheetOverlay'); }
   function submitCustomRequest(){
     const text = document.getElementById('customReqText').value.trim();
+    const from = document.getElementById('customReqFrom').value.trim();
+    const budget = document.getElementById('customReqBudget').value.trim();
     if(!text){ showToast('اكتب تفاصيل الطلب الأول'); return; }
+    // بنضم "من فين" و"الميزانية" لنص الطلب عشان المندوب يشوفهم في شاشته من غير ما نحتاج نعدّل تطبيق المندوب
+    let fullText = text;
+    if(from) fullText += ` — من: ${from}`;
+    if(budget) fullText += ` — الميزانية: ${budget}`;
     const orderRef = fbDb.ref('orders').push();
     const orderData = {
-      items: [{item: text, vendorName: 'طلب مخصوص', qty:1, price:0, ic:'📝'}],
+      items: [{item: fullText, vendorName: 'طلب مخصوص', qty:1, price:0, ic:'📝'}],
       step: 0,
       placedAt: firebase.database.ServerValue.TIMESTAMP,
       custom: true,
