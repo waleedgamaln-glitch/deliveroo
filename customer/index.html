@@ -340,29 +340,6 @@
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.4 0-13.8 4.2-17 10.3z"/><path fill="#4CAF50" d="M24 44c5.4 0 10.3-2 14-5.2l-6.5-5.4C29.5 35.1 26.9 36 24 36c-5.4 0-9.9-3.4-11.5-8.2l-6.5 5C9.8 39.6 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.9 2.6-2.7 4.7-5 6.1l6.5 5.4C40.5 36.6 44 30.9 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
     تسجيل الدخول بجوجل
   </button>
-  <div style="margin:14px 0; color:var(--muted); font-size:.8rem;">أو</div>
-  <button class="primary-btn-auth" style="max-width:320px;" onclick="showAuthStep(2)">تسجيل الدخول برقم الموبايل</button>
-</div>
-
-<!-- ---------- Step 2: Phone number (mandatory) ---------- -->
-<div class="auth-screen" id="authScreen2">
-  <div class="logo-mark">📱</div>
-  <h1>رقم موبايلك</h1>
-  <p>محتاجينه ثابت للتواصل معاك لتأكيد الطلب وتنسيق التوصيل — هنبعتلك كود تأكيد بالـ SMS</p>
-  <input id="phoneInput" type="tel" placeholder="01xxxxxxxxx" maxlength="11">
-  <button class="primary-btn-auth" id="sendOtpBtn" onclick="sendOtp()">إرسال كود التأكيد</button>
-  <button class="ghost-btn" style="margin-top:12px; width:100%; max-width:320px;" onclick="showAuthStep(1)">رجوع</button>
-  <div id="recaptcha-container"></div>
-</div>
-
-<!-- ---------- Step 2b: OTP verification ---------- -->
-<div class="auth-screen" id="authScreen2b">
-  <div class="logo-mark">🔐</div>
-  <h1>أدخل كود التأكيد</h1>
-  <p id="otpSentTo">اتبعت كود مكوّن من 6 أرقام برسالة SMS على رقمك</p>
-  <input id="otpInput" type="tel" placeholder="------" maxlength="6" style="letter-spacing:8px; font-size:1.2rem;">
-  <button class="primary-btn-auth" onclick="verifyOtp()">تأكيد الرقم</button>
-  <button class="ghost-btn" style="margin-top:12px; width:100%; max-width:320px;" onclick="showAuthStep(2)">تغيير الرقم</button>
 </div>
 
 <!-- ---------- Step 3: Create account — full profile ---------- -->
@@ -372,6 +349,7 @@
   <p>محتاجين نعرفك أكتر عشان نجهزلك تجربة مناسبة</p>
   <input id="firstNameInput" type="text" placeholder="الاسم الأول">
   <input id="lastNameInput" type="text" placeholder="اسم العائلة">
+  <input id="phoneInput" type="tel" placeholder="رقم الموبايل (01xxxxxxxxx)" maxlength="11">
   <input id="emailInput" type="email" placeholder="الإيميل (لإرسال الفواتير والعروض)">
   <div class="theme-choice-row">
     <button class="theme-choice selected" id="genderChoiceMale" onclick="selectGenderChoice('male')">
@@ -1145,8 +1123,6 @@
   // ---------- Auth / Onboarding ----------
   function showAuthStep(step){
     document.getElementById('authScreen1').classList.remove('visible');
-    document.getElementById('authScreen2').classList.remove('visible');
-    document.getElementById('authScreen2b').classList.remove('visible');
     document.getElementById('authScreen3').classList.remove('visible');
     document.getElementById('authScreen' + step).classList.add('visible');
   }
@@ -1170,83 +1146,19 @@
     customerId = user.uid;
     fbDb.ref('users/' + customerId).once('value').then(snap => {
       const data = snap.val();
-      const profileComplete = data && data.firstName && data.lastName && data.gender && data.location && data.birthDate;
+      const profileComplete = data && data.firstName && data.lastName && data.gender && data.location && data.birthDate && data.phone;
       if(profileComplete){
         customerPhone = data.phone || '';
         selectedThemeChoice = data.gender; // النوع نفسه هو اللي بيحدد شكل التطبيق
         enterApp();
-      } else if(data && data.phone){
-        // الرقم اتأكد قبل كده بس البروفايل ناقص (أو دخل بجوجل من غير رقم لسه)
-        customerPhone = data.phone;
-        prefillProfileForm();
-        showAuthStep(3);
-      } else if(user.phoneNumber){
-        // اتسجل برقم موبايل من غير جوجل، البروفايل ناقص
-        customerPhone = user.phoneNumber.replace('+2', '');
-        prefillProfileForm();
-        showAuthStep(3);
       } else {
-        // مفيش رقم متسجل خالص لسه — لو دخل بجوجل مباشرة، نطلب منه يأكد رقمه الأول
-        showAuthStep(2);
+        // بروفايل ناقص (أول مرة يسجل دخول، أو مسجل بجوجل ولسه معملش البروفايل)
+        if(data && data.phone) customerPhone = data.phone;
+        prefillProfileForm();
+        showAuthStep(3);
       }
     });
   });
-
-  // ---------- Phone OTP verification (Firebase Phone Auth) ----------
-  let recaptchaVerifier = null;
-  let confirmationResult = null;
-
-  function sendOtp(){
-    const phone = document.getElementById('phoneInput').value.trim();
-    if(!/^01[0-9]{9}$/.test(phone)){ showToast('اكتب رقم موبايل مصري صحيح (01xxxxxxxxx)'); return; }
-    // تحويل الرقم المصري (01xxxxxxxxx) لصيغة دولية (+2xxxxxxxxxxx) المطلوبة لـ Firebase Phone Auth
-    const intlPhone = '+2' + phone;
-    const btn = document.getElementById('sendOtpBtn');
-    btn.disabled = true; btn.textContent = 'جاري الإرسال...';
-
-    if(!recaptchaVerifier){
-      recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' });
-    }
-    fbAuth.signInWithPhoneNumber(intlPhone, recaptchaVerifier).then(result => {
-      confirmationResult = result;
-      customerPhone = phone;
-      document.getElementById('otpSentTo').textContent = `اتبعت كود على الرقم ${phone}`;
-      btn.disabled = false; btn.textContent = 'إرسال كود التأكيد';
-      showAuthStep('2b');
-    }).catch(err => {
-      btn.disabled = false; btn.textContent = 'إرسال كود التأكيد';
-      showToast('تعذر إرسال الكود، تأكد من الرقم وحاول تاني');
-      if(recaptchaVerifier) recaptchaVerifier.render().then(id => grecaptcha.reset(id));
-    });
-  }
-
-  function verifyOtp(){
-    const code = document.getElementById('otpInput').value.trim();
-    if(!/^[0-9]{6}$/.test(code)){ showToast('اكتب الكود المكوّن من 6 أرقام'); return; }
-    if(!confirmationResult){ showToast('ابعت الكود الأول'); return; }
-    // لو المستخدم داخل أصلاً بحساب جوجل، بنربط رقم الموبايل بنفس الحساب (مش حساب منفصل)
-    // لو مفيش حساب جوجل، رقم الموبايل نفسه بيبقى حساب تسجيل الدخول
-    const googleUser = fbAuth.currentUser;
-    const wasSignedInWithGoogle = googleUser && googleUser.providerData.some(p => p.providerId === 'google.com');
-
-    confirmationResult.confirm(code).then(phoneResult => {
-      if(wasSignedInWithGoogle && phoneResult.credential){
-        return googleUser.linkWithCredential(phoneResult.credential).catch(() => {});
-      }
-    }).then(() => {
-      customerId = fbAuth.currentUser.uid;
-      return fbDb.ref('users/' + customerId).update({
-        phone: customerPhone,
-        phoneVerified: true,
-      });
-    }).then(() => {
-      showToast('تم تأكيد رقمك ✅');
-      prefillProfileForm();
-      showAuthStep(3);
-    }).catch(() => {
-      showToast('الكود غلط، حاول تاني');
-    });
-  }
 
   // ---------- Registration (create account) ----------
   // لو المستخدم داخل بحساب جوجل، ناخد اسمه وإيميله من بيانات الحساب مباشرة بدل ما نطلب منه يكتبهم تاني
@@ -1262,6 +1174,7 @@
       document.getElementById('lastNameInput').value = '';
     }
     document.getElementById('emailInput').value = (isGoogleUser && user.email) ? user.email : '';
+    document.getElementById('phoneInput').value = customerPhone || '';
   }
   function selectGenderChoice(gender){
     selectedThemeChoice = gender;
@@ -1272,21 +1185,24 @@
   function completeRegistration(){
     const firstName = document.getElementById('firstNameInput').value.trim();
     const lastName = document.getElementById('lastNameInput').value.trim();
+    const phone = document.getElementById('phoneInput').value.trim();
     const email = document.getElementById('emailInput').value.trim();
     const location = document.getElementById('locationInput').value.trim();
     const birthDate = document.getElementById('birthDateInput').value;
     if(!firstName || !lastName){ showToast('اكتب الاسم الأول واسم العائلة'); return; }
+    if(!/^01[0-9]{9}$/.test(phone)){ showToast('اكتب رقم موبايل مصري صحيح (01xxxxxxxxx)'); return; }
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showToast('اكتب إيميل صحيح'); return; }
     if(!location){ showToast('اكتب المكان اللي ساكن فيه'); return; }
     if(!birthDate){ showToast('اختار تاريخ ميلادك'); return; }
 
+    customerPhone = phone;
     fbDb.ref('users/' + customerId).update({
       firstName: firstName,
       lastName: lastName,
       gender: selectedThemeChoice,
       location: location,
       birthDate: birthDate,
-      phone: customerPhone,
+      phone: phone,
       email: email,
     }).then(() => {
       enterApp();
@@ -1300,8 +1216,6 @@
   function enterApp(){
     applyTheme(selectedThemeChoice);
     document.getElementById('authScreen1').classList.remove('visible');
-    document.getElementById('authScreen2').classList.remove('visible');
-    document.getElementById('authScreen2b').classList.remove('visible');
     document.getElementById('authScreen3').classList.remove('visible');
     document.getElementById('appShell').style.display = 'block';
     renderCats();
