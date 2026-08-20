@@ -314,6 +314,10 @@
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('setupScreen').style.display = 'flex';
       }
+    }).catch(err => {
+      // لو حصل خطأ صلاحيات (permission_denied) أو أي خطأ تاني في قراءة بيانات المتجر، نوضحه بدل ما الشاشة تفضل واقفة على "بيحمّل"
+      showLoginError('تعذر تحميل بيانات المتجر: ' + (err && err.code ? err.code : (err && err.message ? err.message : 'خطأ غير معروف')));
+      document.getElementById('loginScreen').style.display = 'flex';
     });
   });
 
@@ -345,11 +349,11 @@
       vendorData = snap.val() || vendorData;
       renderTopbar();
       if(activeTab === 'store' || activeTab === 'products') render();
-    });
+    }, err => showToast('تعذر تحديث بيانات المتجر: ' + (err && err.code ? err.code : 'خطأ')));
     fbDb.ref('orders').on('value', snap => {
       ordersCache = snap.val() || {};
       if(activeTab === 'orders') render();
-    });
+    }, err => showToast('تعذر تحميل الطلبات: ' + (err && err.code ? err.code : 'خطأ')));
     renderTopbar();
     render();
   }
