@@ -275,11 +275,12 @@
   let editingProductId = null;
 
   function merchantLogin(){
-    // بنستخدم signInWithRedirect على طول من غير ما نجرب popup الأول — الـ popup مش موثوق على الموبايل
-    // (خصوصًا جوه تطبيق متعبّي من PWABuilder) وبيسبب "بيفضل يحمل ومبيرجعش حاجة"
     const provider = new firebase.auth.GoogleAuthProvider();
-    fbAuth.signInWithRedirect(provider).catch(err => {
-      if(err && err.code === 'auth/unauthorized-domain'){
+    // نجرب popup الأول، ولو المتصفح منعها نرجع لـ redirect
+    fbAuth.signInWithPopup(provider).catch(err => {
+      if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')){
+        fbAuth.signInWithRedirect(provider);
+      } else if(err && err.code === 'auth/unauthorized-domain'){
         showLoginError('الدومين ده مش مصرّح له في Firebase.');
       } else {
         showLoginError('تعذر تسجيل الدخول: ' + (err && err.code ? err.code : 'خطأ غير معروف'));
@@ -293,15 +294,6 @@
     el.textContent = msg;
     el.style.display = 'block';
   }
-
-  // بيتنفّذ لما المستخدم يرجع من صفحة تسجيل دخول جوجل بعد signInWithRedirect
-  fbAuth.getRedirectResult().catch(err => {
-    if(err && err.code === 'auth/unauthorized-domain'){
-      showLoginError('الدومين ده مش مصرّح له في Firebase.');
-    } else if(err && err.code){
-      showLoginError('تعذر تسجيل الدخول: ' + err.code);
-    }
-  });
 
   fbAuth.onAuthStateChanged(user => {
     if(!user){
