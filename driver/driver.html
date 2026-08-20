@@ -190,7 +190,10 @@
         </div>
         <div class="driver-name" id="driverNameDisplay"></div>
       </div>
-      <button class="status-pill online" id="onlineToggle" onclick="toggleOnline()"><span class="dot"></span> متاح</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="status-pill online" id="onlineToggle" onclick="toggleOnline()"><span class="dot"></span> متاح</button>
+        <button onclick="driverLogout()" style="background:rgba(251,246,239,.08); border:none; color:rgba(251,246,239,.6); border-radius:10px; padding:8px 10px; font-size:.72rem; font-weight:700;">خروج</button>
+      </div>
     </div>
     <div class="stats-row">
       <div class="stat-card"><b id="statAvailable">0</b><span>طلبات متاحة</span></div>
@@ -247,17 +250,27 @@
 
   let driverId = null;
   let driverName = '';
+  let driverPhone = '';
   let activeTab = 'available';
   let isOnline = true;
   let ordersCache = {};
   let ordersListenerRef = null;
+  const DRIVER_STORAGE_KEY = 'deliveroo_driver_info';
 
   function driverLogin(){
     const name = document.getElementById('driverNameInput').value.trim();
     const phone = document.getElementById('driverPhoneInput').value.trim();
     if(!name || !phone){ showToast('اكتب الاسم ورقم الموبايل'); return; }
+    // بنحفظ الاسم والرقم على الجهاز عشان المرة الجاية اللي المندوب يفتح فيها التطبيق
+    // يدخل على طول من غير ما يكتبهم تاني (لحد ما يعمل "تسجيل خروج" بنفسه)
+    try{ localStorage.setItem(DRIVER_STORAGE_KEY, JSON.stringify({name, phone})); }catch(e){}
     driverName = name;
-    document.getElementById('driverNameDisplay').textContent = name + ' · ' + phone;
+    driverPhone = phone;
+    enterDriverApp();
+  }
+
+  function enterDriverApp(){
+    document.getElementById('driverNameDisplay').textContent = driverName + ' · ' + driverPhone;
     // لازم نعمل تسجيل دخول حقيقي في Firebase (ولو مجهول) عشان قواعد الأمان بتاعة قاعدة البيانات
     // بتمنع القراءة/الكتابة إلا لو auth != null — من غيره التطبيق مش هيقدر يقرا أو يعدّل الأوردرات خالص.
     // وبنستخدم الـ uid الحقيقي بتاع Firebase كـ driverId عشان لو قواعد الكتابة بتتأكد إن
@@ -268,10 +281,51 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appShell').classList.add('visible');
       startListening();
+      startLocationSharing();
     }).catch(err => {
       showToast('تعذر تسجيل الدخول: ' + (err && err.code ? err.code : 'خطأ غير معروف'));
     });
   }
+
+  function driverLogout(){
+    try{ localStorage.removeItem(DRIVER_STORAGE_KEY); }catch(e){}
+    stopLocationSharing();
+    fbAuth.signOut().then(() => location.reload());
+  }
+
+  // بنشارك موقع المندوب لحظيًا مع الأوردرات اللي معاه وشغال عليها دلوقتي (لسه ماتسلمتش)
+  // عشان العميل يقدر يشوف الكابتن فين على الخريطة في شاشة التتبع.
+  let geoWatchId = null;
+  function startLocationSharing(){
+    if(!('geolocation' in navigator)) return;
+    if(geoWatchId !== null) return;
+    geoWatchId = navigator.geolocation.watchPosition(pos => {
+      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, updatedAt: pos.timestamp || Date.now() };
+      Object.entries(ordersCache).forEach(([id, o]) => {
+        if(o.driverId === driverId && o.step < TRACK_STEPS.length - 1){
+          fbDb.ref('orders/' + id + '/driverLocation').set(loc).catch(() => {});
+        }
+      });
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 });
+  }
+  function stopLocationSharing(){
+    if(geoWatchId !== null){
+      navigator.geolocation.clearWatch(geoWatchId);
+      geoWatchId = null;
+    }
+  }
+
+  // لو المندوب سجّل دخول قبل كده على نفس الجهاز، بنعدّي شاشة تسجيل الدخول ونفتحله التطبيق على طول
+  (function tryAutoResume(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(DRIVER_STORAGE_KEY) || 'null');
+      if(saved && saved.name && saved.phone){
+        driverName = saved.name;
+        driverPhone = saved.phone;
+        enterDriverApp();
+      }
+    }catch(e){}
+  })();
 
   function toggleOnline(){
     isOnline = !isOnline;
@@ -305,6 +359,7 @@
     activeTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     renderOrders();
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   function renderOrders(){
@@ -334,6 +389,7 @@
     const itemsSummary = o.custom
       ? o.items[0].item
       : o.items.map(i => `${i.item} ×${i.qty}`).join('، ');
+    const orderValue = (o.items || []).reduce((a,i) => a + (i.price||0) * (i.qty||1), 0);
     const isCustom = !!o.custom;
     const currentLabel = TRACK_STEPS[o.step].label;
     const nextLabel = TRACK_STEPS[o.step + 1] ? TRACK_STEPS[o.step + 1].label : null;
@@ -355,6 +411,8 @@
         <span class="oc-id">#${id.slice(-5)}</span>
       </div>
       <div class="oc-items">${itemsSummary}</div>
+      ${!isCustom ? `<div style="font-size:.85rem; font-weight:700; color:#8FDFCB; margin-bottom:10px;">💰 ${orderValue.toLocaleString('ar-EG')} ج.م</div>` : ''}
+      ${!isAvailable && o.deliveryAddress ? `<div style="font-size:.8rem; color:rgba(251,246,239,.75); margin-bottom:6px;">📍 ${o.deliveryAddress}</div>` : ''}
       ${!isAvailable && o.customerPhone ? `<div style="font-size:.8rem; color:rgba(251,246,239,.75); margin-bottom:10px;">📱 <a href="tel:${o.customerPhone}" style="color:#8FDFCB; text-decoration:none;">${o.customerPhone}</a></div>` : ''}
       <div class="oc-meta">
         ${isCustom ? '<span class="badge custom">طلب مخصوص</span>' : ''}

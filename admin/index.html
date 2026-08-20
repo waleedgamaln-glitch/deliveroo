@@ -214,13 +214,15 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
+  // نتأكد إن الجلسة بتفضل محفوظة على الجهاز عشان المستخدم مايضطرش يسجل دخول تاني كل مرة يفتح فيها التطبيق
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
   // الإيميلات المصرّح لها بدخول لوحة التحكم
   const ADMIN_EMAILS = ['waleedgamaln@gmail.com'];
 
   const STEPS = ['تم استلام الطلب','جاري التحضير','المندوب في الطريق','تم التوصيل'];
   let tab = 'orders';
-  let ordersCache = {}, usersCache = {}, vendorsCache = {};
+  let ordersCache = {}, usersCache = {}, vendorsCache = {}, driverRatingsCache = {};
 
   function adminLogin(){
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -259,6 +261,7 @@
     db.ref('orders').on('value', s => { ordersCache = s.val() || {}; refresh(); });
     db.ref('users').on('value', s => { usersCache = s.val() || {}; refresh(); });
     db.ref('vendors').on('value', s => { vendorsCache = s.val() || {}; refresh(); });
+    db.ref('driverRatings').on('value', s => { driverRatingsCache = s.val() || {}; refresh(); });
   }
 
   function orderTotal(o){
@@ -286,6 +289,7 @@
     tab = t;
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
     render();
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   function render(){
@@ -308,7 +312,7 @@
         <div class="row"><h4>${o.custom ? 'طلب مخصوص' : (o.items[0]?.vendorName || '')}</h4><span class="id">#${id.slice(-5)}</span></div>
         <div class="meta">${items}</div>
         <div class="meta">👤 ${u.firstName || ''} ${u.lastName || ''} · 📱 ${o.customerPhone || u.phone || '-'}</div>
-        <div class="meta">📍 ${u.location || '-'}${o.driverName ? ` · 🛵 ${o.driverName}` : ''}</div>
+        <div class="meta">📍 ${o.deliveryAddress || u.location || '-'}${o.driverName ? ` · 🛵 ${o.driverName}` : ''}</div>
         <div class="meta">💰 ${orderTotal(o).toLocaleString('ar-EG')} ج.م</div>
         <span class="badge ${badge}">${STEPS[Math.min(o.step, STEPS.length-1)]}</span>
         ${o.custom ? '<span class="badge b-custom">مخصوص</span>' : ''}
@@ -344,8 +348,12 @@
     const list = Object.entries(map);
     if(!list.length) return `<div class="empty"><span class="ic">🛵</span>مفيش مندوب قبل أي طلب لسه.</div>`;
     return `<div class="card"><table>
-      <tr><th>المندوب</th><th>طلبات استلمها</th><th>سلّمها</th><th>قيمة (ج.م)</th></tr>
-      ${list.map(([,d]) => `<tr><td>${d.name}</td><td>${d.total}</td><td>${d.done}</td><td>${d.revenue.toLocaleString('ar-EG')}</td></tr>`).join('')}
+      <tr><th>المندوب</th><th>طلبات استلمها</th><th>سلّمها</th><th>قيمة (ج.م)</th><th>التقييم</th></tr>
+      ${list.map(([driverId,d]) => {
+        const agg = (driverRatingsCache[driverId] || {}).ratingAgg;
+        const avg = agg && agg.count ? (agg.sum / agg.count).toFixed(1) + ' ★ (' + agg.count + ')' : '-';
+        return `<tr><td>${d.name}</td><td>${d.total}</td><td>${d.done}</td><td>${d.revenue.toLocaleString('ar-EG')}</td><td>${avg}</td></tr>`;
+      }).join('')}
     </table></div>`;
   }
 

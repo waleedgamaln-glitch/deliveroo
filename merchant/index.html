@@ -203,6 +203,10 @@
     <input id="storeIconInput" placeholder="مثال: 🍗" maxlength="4" value="🏪">
   </div>
   <div class="field">
+    <label>رسوم التوصيل (ج.م)</label>
+    <input id="storeDeliveryFeeInput" type="number" placeholder="مثال: 20" value="20">
+  </div>
+  <div class="field">
     <label>وصف مختصر عن المتجر</label>
     <textarea id="storeTaglineInput" placeholder="مثال: مشويات وأكل بيتي طازة"></textarea>
   </div>
@@ -265,6 +269,8 @@
   firebase.initializeApp(firebaseConfig);
   const fbDb = firebase.database();
   const fbAuth = firebase.auth();
+  // نتأكد إن الجلسة بتفضل محفوظة على الجهاز عشان التاجر مايضطرش يسجل دخول تاني كل مرة يفتح فيها التطبيق
+  fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
   const STEPS = ['تم استلام الطلب','جاري التحضير','المندوب في الطريق','تم التوصيل'];
 
@@ -326,11 +332,13 @@
     const category = document.getElementById('storeCategoryInput').value;
     const phone = document.getElementById('storePhoneInput').value.trim();
     const icon = document.getElementById('storeIconInput').value.trim() || '🏪';
+    const deliveryFee = parseFloat(document.getElementById('storeDeliveryFeeInput').value);
     const tagline = document.getElementById('storeTaglineInput').value.trim();
     if(!name){ showToast('اكتب اسم المتجر'); return; }
     if(!/^01[0-9]{9}$/.test(phone)){ showToast('اكتب رقم موبايل مصري صحيح (01xxxxxxxxx)'); return; }
     const data = {
       name, category, phone, icon, tagline,
+      deliveryFee: isNaN(deliveryFee) ? 20 : deliveryFee,
       active: false,
       ownerEmail: fbAuth.currentUser.email || '',
       createdAt: firebase.database.ServerValue.TIMESTAMP,
@@ -368,6 +376,7 @@
     activeTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     render();
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   function render(){
@@ -513,6 +522,7 @@
       </div>
       <div class="field"><label>رقم موبايل المتجر</label><input id="storePhoneEdit" value="${(vendorData.phone||'').replace(/"/g,'&quot;')}"></div>
       <div class="field"><label>أيقونة المتجر (إيموجي)</label><input id="storeIconEdit" value="${(vendorData.icon||'🏪').replace(/"/g,'&quot;')}" maxlength="4"></div>
+      <div class="field"><label>رسوم التوصيل (ج.م)</label><input id="storeDeliveryFeeEdit" type="number" value="${vendorData.deliveryFee != null ? vendorData.deliveryFee : 20}"></div>
       <div class="field"><label>وصف مختصر</label><textarea id="storeTaglineEdit">${vendorData.tagline||''}</textarea></div>
       <button class="btn-primary" onclick="saveStore()">حفظ التعديلات</button>
     `;
@@ -523,9 +533,10 @@
     const category = document.getElementById('storeCategoryEdit').value;
     const phone = document.getElementById('storePhoneEdit').value.trim();
     const icon = document.getElementById('storeIconEdit').value.trim() || '🏪';
+    const deliveryFee = parseFloat(document.getElementById('storeDeliveryFeeEdit').value);
     const tagline = document.getElementById('storeTaglineEdit').value.trim();
     if(!name){ showToast('اكتب اسم المتجر'); return; }
-    fbDb.ref('vendors/' + merchantId).update({ name, category, phone, icon, tagline }).then(() => {
+    fbDb.ref('vendors/' + merchantId).update({ name, category, phone, icon, tagline, deliveryFee: isNaN(deliveryFee) ? 20 : deliveryFee }).then(() => {
       showToast('اتحفظت بيانات المتجر');
     }).catch(() => showToast('حصل خطأ، حاول تاني'));
   }

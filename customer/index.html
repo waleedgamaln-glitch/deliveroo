@@ -300,6 +300,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <meta name="theme-color" content="#241A2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -396,7 +398,7 @@
         </svg>
         <span style="font-style:italic; letter-spacing:.3px;">Deliveroo</span>
       </div>
-      <div class="loc">📍 التوصيل إلى <b>مدينة نصر، القاهرة</b> ▾</div>
+      <div class="loc" id="headerLoc" onclick="switchNav('account')" style="cursor:pointer;">📍 التوصيل إلى <b id="headerLocText">...</b> ▾</div>
     </div>
     <button class="cart-btn" onclick="openCart()">🛒
       <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
@@ -408,36 +410,59 @@
   </div>
 </div>
 
-<div class="own-store-banner" onclick="openVendor(3)">
-  <div class="osb-thumb">🛍️</div>
-  <div class="osb-info">
-    <b>ماركت Deliveroo — متجرنا الرسمي</b>
-    <span>كل البراندات الأساسية بأسعار موحدة، توصيل سريع مضمون</span>
+<div id="homeDecor">
+  <div class="own-store-banner" onclick="openVendor('3')">
+    <div class="osb-thumb">🛍️</div>
+    <div class="osb-info">
+      <b>ماركت Deliveroo — متجرنا الرسمي</b>
+      <span>كل البراندات الأساسية بأسعار موحدة، توصيل سريع مضمون</span>
+    </div>
+    <button class="osb-arrow">تسوق الآن</button>
   </div>
-  <button class="osb-arrow">تسوق الآن</button>
+
+  <div class="cats" id="catScroller"></div>
+
+  <div class="hero-request">
+    <div class="eyebrow">مش لاقي اللي عايزه؟</div>
+    <h2>اطلب أي حاجة تانية، وحنا نجيبها لك</h2>
+    <p>اكتب طلبك بالتفصيل — من أي محل أو مكان — وهنوصّله لباب البيت.</p>
+    <button onclick="openCustomRequest()">اطلب حاجة تانية ➜</button>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h3>عروض اليوم</h3><span>الكل</span></div>
+  </div>
+  <div class="offers">
+    <div class="offer-card"><b>خصم 30% على أول طلب</b><span>لأي مطعم أو ماركت — استخدم WELCOME30</span></div>
+    <div class="offer-card mint"><b>توصيل مجاني</b><span>على طلبات الماركت فوق 200 جنيه</span></div>
+    <div class="offer-card"><b>2 بـ1 على الحلويات</b><span>من محلات مختارة حتى الساعة 11م</span></div>
+  </div>
 </div>
 
-<div class="cats" id="catScroller"></div>
-
-<div class="hero-request">
-  <div class="eyebrow">مش لاقي اللي عايزه؟</div>
-  <h2>اطلب أي حاجة تانية، وحنا نجيبها لك</h2>
-  <p>اكتب طلبك بالتفصيل — من أي محل أو مكان — وهنوصّله لباب البيت.</p>
-  <button onclick="openCustomRequest()">اطلب حاجة تانية ➜</button>
-</div>
-
-<div class="section">
-  <div class="section-head"><h3>عروض اليوم</h3><span>الكل</span></div>
-</div>
-<div class="offers">
-  <div class="offer-card"><b>خصم 30% على أول طلب</b><span>لأي مطعم أو ماركت — استخدم WELCOME30</span></div>
-  <div class="offer-card mint"><b>توصيل مجاني</b><span>على طلبات الماركت فوق 200 جنيه</span></div>
-  <div class="offer-card"><b>2 بـ1 على الحلويات</b><span>من محلات مختارة حتى الساعة 11م</span></div>
-</div>
-
-<div class="section">
+<div class="section" id="browseSection">
   <div class="section-head"><h3 id="listTitle">الأقرب ليك</h3><span id="listCount"></span></div>
+  <div id="sortBar" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+    <select class="field" style="width:auto; flex:1; min-width:130px; padding:8px 10px;" onchange="setSortBy(this.value)">
+      <option value="default">ترتيب: الأقرب ليك</option>
+      <option value="rating">الأعلى تقييمًا</option>
+      <option value="eta">الأسرع توصيل</option>
+    </select>
+    <button class="cat-chip" id="topRatedChip" style="min-width:auto; padding:8px 14px;" onclick="toggleTopRatedFilter()">★ 4.5 فأعلى</button>
+  </div>
   <div class="vendor-grid" id="vendorGrid"></div>
+</div>
+
+<!-- صفحة المتجر الكاملة (بدل ما كانت تفتح كـ sheet صغيرة فوق الشاشة) -->
+<div class="section" id="vendorPageSection" style="display:none;">
+  <button class="ghost-btn" onclick="closeVendorPage()" style="margin-bottom:16px;">→ رجوع</button>
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+    <div id="vpThumb" style="width:56px; height:56px; border-radius:16px; background:var(--paper-2); display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0;"></div>
+    <div style="min-width:0;">
+      <h2 id="vpName" style="margin:0; font-family:'Cairo',sans-serif; font-size:1.15rem;"></h2>
+      <div class="sub" id="vpMeta" style="margin:4px 0 0;"></div>
+    </div>
+  </div>
+  <div id="vpMenu"></div>
 </div>
 
 <div class="bottom-nav">
@@ -445,20 +470,9 @@
   <button class="nav-btn" data-nav="orders" onclick="switchNav('orders')"><span class="ic">📦</span>طلباتي</button>
   <button class="nav-btn" data-nav="fav" onclick="switchNav('fav')"><span class="ic">❤️</span>المفضلة</button>
   <button class="nav-btn" data-nav="account" onclick="switchNav('account')"><span class="ic">👤</span>حسابي</button>
-  <button class="nav-btn" data-nav="driver" onclick="switchNav('driver')"><span class="ic">🛵</span>وضع المندوب</button>
 </div>
 </div><!-- /appShell -->
 
-<!-- Vendor menu sheet -->
-<div class="sheet-overlay" id="vendorSheetOverlay">
-  <div class="sheet" style="position:relative;">
-    <button class="close-x" onclick="closeSheet('vendorSheetOverlay')">✕</button>
-    <div class="sheet-handle"></div>
-    <h3 id="vsName"></h3>
-    <div class="sub" id="vsMeta"></div>
-    <div id="vsMenu"></div>
-  </div>
-</div>
 
 <!-- Custom request sheet (Mrsool-style) -->
 <div class="sheet-overlay" id="customSheetOverlay">
@@ -506,7 +520,10 @@
     <div class="sheet-handle"></div>
     <h3>متابعة الطلب</h3>
     <div class="sub" id="trackSub"></div>
+    <div id="trackEta" style="display:none; font-weight:800; color:var(--mint-dark); background:rgba(63,167,150,.12); border-radius:12px; padding:8px 12px; margin:8px 0; font-size:.9rem;"></div>
+    <div id="trackMap" style="display:none; height:190px; border-radius:16px; overflow:hidden; margin:8px 0; border:1px solid var(--line);"></div>
     <div class="track-steps" id="trackSteps"></div>
+    <div id="ratingBox"></div>
   </div>
 </div>
 
@@ -538,10 +555,14 @@
   firebase.initializeApp(firebaseConfig);
   const fbDb = firebase.database();
   const fbAuth = firebase.auth();
+  // نتأكد إن الجلسة بتفضل محفوظة على الجهاز عشان العميل مايضطرش يسجل دخول تاني كل مرة يفتح فيها التطبيق
+  fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
   // معرّف العميل بقى ثابت فعليًا = رقم حساب جوجل (uid)، مش عشوائي — عشان طلباته وبياناته تفضل موجودة كل ما يرجع يسجل دخول
   let customerId = null;
   let customerPhone = null;
+  let addresses = {};
+  let activeAddressId = null;
   let selectedThemeChoice = 'male';
 
   // ===== Mock data combining strengths of the referenced apps =====
@@ -561,17 +582,17 @@
   ];
 
   const STATIC_VENDORS = [
-    {id:1, cat:'food', name:'مطعم أبو الفرن', ic:'🍗', rating:4.7, eta:'25-35 د', tag:'مشويات', menu:[
+    {id:1, cat:'food', name:'مطعم أبو الفرن', ic:'🍗', rating:4.7, eta:'25-35 د', tag:'مشويات', deliveryFee:15, menu:[
       {name:'نص فرخة مشوية', price:120, ic:'🍗'},
       {name:'كباب حلة', price:95, ic:'🍖'},
       {name:'أرز بالشعرية', price:20, ic:'🍚'},
     ]},
-    {id:2, cat:'food', name:'بيتزا الحارة', ic:'🍕', rating:4.5, eta:'20-30 د', tag:'إيطالي', menu:[
+    {id:2, cat:'food', name:'بيتزا الحارة', ic:'🍕', rating:4.5, eta:'20-30 د', tag:'إيطالي', deliveryFee:15, menu:[
       {name:'بيتزا مارجريتا وسط', price:110, ic:'🍕'},
       {name:'بيتزا بيبروني كبير', price:160, ic:'🍕'},
       {name:'كولا 500مل', price:15, ic:'🥤'},
     ]},
-    {id:3, cat:'grocery', name:'ماركت Deliveroo', ic:'🛍️', rating:4.6, eta:'15-25 د', tag:'متجرنا الرسمي — أسعار موحدة وجودة مضمونة', owned:true, menu:[
+    {id:3, cat:'grocery', name:'ماركت Deliveroo', ic:'🛍️', rating:4.6, eta:'15-25 د', tag:'متجرنا الرسمي — أسعار موحدة وجودة مضمونة', owned:true, deliveryFee:20, menu:[
       // ---- مياه ----
       {name:'مياه بركة 1.5 لتر', price:12, ic:'💧', sub:'مياه'},
       {name:'مياه نستله 1.5 لتر', price:14, ic:'💧', sub:'مياه'},
@@ -698,22 +719,22 @@
       {name:'ماجي مرقة دجاج (نستله)', price:10, ic:'🍲', sub:'توابل وبهارات'},
       {name:'ماجي مرقة لحم (نستله)', price:10, ic:'🍲', sub:'توابل وبهارات'},
     ]},
-    {id:4, cat:'grocery', name:'سوبر فريش', ic:'🥦', rating:4.8, eta:'20-30 د', tag:'خضار وفاكهة طازة', menu:[
+    {id:4, cat:'grocery', name:'سوبر فريش', ic:'🥦', rating:4.8, eta:'20-30 د', tag:'خضار وفاكهة طازة', deliveryFee:20, menu:[
       {name:'كيلو طماطم', price:18, ic:'🍅'},
       {name:'كيلو موز', price:28, ic:'🍌'},
       {name:'كيلو خيار', price:15, ic:'🥒'},
     ]},
-    {id:5, cat:'sweets', name:'حلواني الأصايل', ic:'🎂', rating:4.9, eta:'30-40 د', tag:'شرقي وغربي', menu:[
+    {id:5, cat:'sweets', name:'حلواني الأصايل', ic:'🎂', rating:4.9, eta:'30-40 د', tag:'شرقي وغربي', deliveryFee:20, menu:[
       {name:'كيلو بسبوسة', price:110, ic:'🧁'},
       {name:'تورتة شوكولاتة', price:250, ic:'🍰'},
       {name:'كنافة بالقشطة', price:90, ic:'🍮'},
     ]},
-    {id:6, cat:'pharmacy', name:'صيدلية النور', ic:'💊', rating:4.7, eta:'15-20 د', tag:'أدوية ومستلزمات', menu:[
+    {id:6, cat:'pharmacy', name:'صيدلية النور', ic:'💊', rating:4.7, eta:'15-20 د', tag:'أدوية ومستلزمات', deliveryFee:15, menu:[
       {name:'باراسيتامول', price:12, ic:'💊'},
       {name:'فيتامين سي', price:45, ic:'🍊'},
       {name:'كمامات (علبة)', price:30, ic:'😷'},
     ]},
-    {id:7, cat:'food', name:'يمّي برجر', ic:'🍔', rating:4.4, eta:'20-25 د', tag:'برجر وفرايد', menu:[
+    {id:7, cat:'food', name:'يمّي برجر', ic:'🍔', rating:4.4, eta:'20-25 د', tag:'برجر وفرايد', deliveryFee:15, menu:[
       {name:'برجر لحم مزدوج', price:135, ic:'🍔'},
       {name:'بطاطس كبيرة', price:35, ic:'🍟'},
       {name:'ميلك شيك فراولة', price:45, ic:'🥤'},
@@ -734,10 +755,11 @@
         cat: raw.category || 'food',
         name: raw.name,
         ic: raw.icon || '🏪',
-        rating: raw.rating || 'جديد',
+        rating: (raw.ratingAgg && raw.ratingAgg.count) ? (raw.ratingAgg.sum / raw.ratingAgg.count).toFixed(1) : 'جديد',
         eta: raw.eta || '30-45 د',
         tag: raw.tagline || '',
         owned: false,
+        deliveryFee: raw.deliveryFee != null ? raw.deliveryFee : 20,
         menu: Object.values(raw.menu).map(m => ({name: m.name, price: m.price, ic: m.icon || '🍽️', sub: m.category || undefined})),
       }));
     VENDORS = [...STATIC_VENDORS, ...realVendors];
@@ -747,13 +769,15 @@
     fbDb.ref('vendors').on('value', snap => {
       mergeRealVendors(snap.val());
       renderVendors();
-    });
+    }, err => console.error('تعذر تحميل المتاجر الحقيقية:', err));
   }
 
   let state = {
     activeCat: 'all',
     favs: new Set(),
     cart: [], // {vendorId, vendorName, item, qty}
+    sortBy: 'default', // default | rating | eta
+    minRating: 0,
     // الطلبات دلوقتي متخزنة في Firebase مش هنا محليًا — orders/{orderId}
   };
 
@@ -769,9 +793,29 @@
     state.activeCat = id;
     renderCats();
     renderVendors();
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   // ---------- Vendors ----------
+  // بيرجع أول رقم في نص زي "25-35 د" عشان نقدر نرتب بيه (وقت توصيل أقل = أسرع)
+  function parseEtaMinutes(eta){
+    const m = String(eta || '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 999;
+  }
+  function numericRating(v){
+    const r = parseFloat(v.rating);
+    return isNaN(r) ? 0 : r;
+  }
+
+  function setSortBy(val){
+    state.sortBy = val;
+    renderVendors();
+  }
+  function toggleTopRatedFilter(){
+    state.minRating = state.minRating >= 4.5 ? 0 : 4.5;
+    renderVendors();
+  }
+
   function renderVendors(){
     const q = document.getElementById('searchInput').value.trim().toLowerCase();
     let list = VENDORS.filter(v => state.activeCat === 'all' || (state.activeCat === 'own' ? v.owned : v.cat === state.activeCat));
@@ -781,6 +825,15 @@
         v.menu.some(m => m.name.toLowerCase().includes(q))
       );
     }
+    if(state.minRating) list = list.filter(v => numericRating(v) >= state.minRating);
+    if(state.sortBy === 'rating') list = [...list].sort((a,b) => numericRating(b) - numericRating(a));
+    else if(state.sortBy === 'eta') list = [...list].sort((a,b) => parseEtaMinutes(a.eta) - parseEtaMinutes(b.eta));
+
+    const sortBar = document.getElementById('sortBar');
+    if(sortBar) sortBar.style.display = q ? 'none' : 'flex';
+    const topRatedChip = document.getElementById('topRatedChip');
+    if(topRatedChip) topRatedChip.classList.toggle('active', state.minRating >= 4.5);
+
     document.getElementById('listCount').textContent = list.length ? `${list.length} مكان` : '';
     document.getElementById('listTitle').textContent = q ? `نتائج البحث عن "${q}"` : 'الأقرب ليك';
     const grid = document.getElementById('vendorGrid');
@@ -813,12 +866,19 @@
     showToast(state.favs.has(id) ? 'اتضاف للمفضلة' : 'اتشال من المفضلة');
   }
 
-  // ---------- Vendor sheet / menu ----------
+  // ---------- Vendor page (صفحة كاملة بدل ما كانت sheet صغيرة) ----------
   let vsActiveSub = null;
+  let currentVendorId = null;
   function openVendor(id, sub){
     const v = VENDORS.find(x => x.id == id);
-    document.getElementById('vsName').textContent = v.name;
-    document.getElementById('vsMeta').innerHTML = `${v.owned ? `<span class="owned-badge">★ متجرنا الرسمي</span> &nbsp;·&nbsp; ` : `<span class="partner-badge">شريك</span> &nbsp;·&nbsp; `}★ ${v.rating} &nbsp;·&nbsp; ⏱ ${v.eta} &nbsp;·&nbsp; ${v.tag}`;
+    if(!v) return;
+    currentVendorId = v.id;
+    document.getElementById('homeDecor').style.display = 'none';
+    document.getElementById('browseSection').style.display = 'none';
+    document.getElementById('vendorPageSection').style.display = 'block';
+    document.getElementById('vpThumb').textContent = v.ic;
+    document.getElementById('vpName').textContent = v.name;
+    document.getElementById('vpMeta').innerHTML = `${v.owned ? `<span class="owned-badge">★ متجرنا الرسمي</span> &nbsp;·&nbsp; ` : `<span class="partner-badge">شريك</span> &nbsp;·&nbsp; `}★ ${v.rating} &nbsp;·&nbsp; ⏱ ${v.eta} &nbsp;·&nbsp; ${v.tag}`;
 
     const subs = [...new Set(v.menu.filter(m => m.sub).map(m => m.sub))];
     if(sub !== undefined) vsActiveSub = sub;
@@ -846,8 +906,16 @@
       </div>`;
     }).join('');
 
-    document.getElementById('vsMenu').innerHTML = subTabsHtml + itemsHtml;
-    openSheet('vendorSheetOverlay');
+    document.getElementById('vpMenu').innerHTML = subTabsHtml + itemsHtml;
+    window.scrollTo({top: 0, behavior: 'instant'});
+  }
+
+  function closeVendorPage(){
+    currentVendorId = null;
+    document.getElementById('vendorPageSection').style.display = 'none';
+    document.getElementById('homeDecor').style.display = '';
+    document.getElementById('browseSection').style.display = '';
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   function getQty(vendorId, itemName){
@@ -863,9 +931,8 @@
     line.qty += delta;
     if(line.qty <= 0) state.cart = state.cart.filter(l => l !== line);
     updateCartBadge();
-    // re-render whichever sheet is open
-    const v = VENDORS.find(x => x.id == vendorId);
-    if(document.getElementById('vendorSheetOverlay').classList.contains('open')) openVendor(vendorId);
+    // لو صفحة المتجر ده مفتوحة دلوقتي، نحدّث العدادات فيها
+    if(currentVendorId != null && currentVendorId == vendorId) openVendor(vendorId);
   }
 
   function updateCartBadge(){
@@ -873,6 +940,18 @@
     const badge = document.getElementById('cartBadge');
     badge.style.display = count ? 'flex' : 'none';
     badge.textContent = count;
+  }
+
+  // رسوم التوصيل بقت مرتبطة بكل متجر لوحده مش رقم ثابت للكل — توصيل مجاني لو إجمالي السلة 200 جنيه فأكتر،
+  // غير كده بندفع رسوم كل متجر موجود في السلة (لو أكتر من متجر في نفس الأوردر، بتتجمع رسومهم)
+  function computeDelivery(cart){
+    const subtotal = cart.reduce((a,l) => a + l.price*l.qty, 0);
+    if(subtotal >= 200) return 0;
+    const vendorIds = [...new Set(cart.map(l => l.vendorId))];
+    return vendorIds.reduce((a, vid) => {
+      const v = VENDORS.find(x => x.id == vid);
+      return a + (v && v.deliveryFee != null ? v.deliveryFee : 20);
+    }, 0);
   }
 
   // ---------- Cart sheet ----------
@@ -891,7 +970,7 @@
         </div>
       `).join('');
       const subtotal = state.cart.reduce((a,l) => a + l.price*l.qty, 0);
-      const delivery = subtotal >= 200 ? 0 : 20;
+      const delivery = computeDelivery(state.cart);
       document.getElementById('ctSubtotal').textContent = subtotal + ' ج.م';
       document.getElementById('ctDelivery').textContent = delivery === 0 ? 'مجاني' : delivery + ' ج.م';
       document.getElementById('ctGrand').textContent = (subtotal + delivery) + ' ج.م';
@@ -909,6 +988,8 @@
       placedAt: firebase.database.ServerValue.TIMESTAMP,
       customerId: customerId,
       customerPhone: customerPhone,
+      deliveryAddress: activeAddressText(),
+      deliveryFee: computeDelivery(state.cart),
     };
     orderRef.set(orderData).then(() => {
       state.cart = [];
@@ -938,6 +1019,7 @@
       custom: true,
       customerId: customerId,
       customerPhone: customerPhone,
+      deliveryAddress: activeAddressText(),
     };
     orderRef.set(orderData).then(() => {
       document.getElementById('customReqText').value = '';
@@ -958,7 +1040,9 @@
   ];
 
   let trackingListenerRef = null;
+  let currentTrackingOrderId = null;
   function openTracking(orderId){
+    currentTrackingOrderId = orderId;
     openSheet('trackSheetOverlay');
     watchTrackingLive(orderId);
   }
@@ -970,6 +1054,120 @@
         <div><b>${s.label}</b><span>${s.sub}</span></div>
       </div>
     `).join('');
+    renderRatingBox(order);
+    renderEtaCountdown(order);
+    renderTrackingMap(order);
+  }
+
+  // ---------- ETA تقريبي + عدّاد تنازلي ----------
+  // ملحوظة: تقدير تقريبي مبني على وقت التحضير/التوصيل اللي المتجر حدده (مش حساب مسافة أو حركة مرور حقيقية)
+  function parseEtaRangeAvgMinutes(eta){
+    const nums = String(eta || '').match(/\d+/g);
+    if(!nums || !nums.length) return 35;
+    const vals = nums.map(n => parseInt(n, 10));
+    return Math.round(vals.reduce((a,b) => a+b, 0) / vals.length);
+  }
+  let etaTimer = null;
+  function renderEtaCountdown(order){
+    const box = document.getElementById('trackEta');
+    if(etaTimer){ clearInterval(etaTimer); etaTimer = null; }
+    const delivered = order.step >= TRACK_STEPS.length - 1;
+    if(delivered || !order.placedAt){ box.style.display = 'none'; return; }
+    let etaMinutes = 35;
+    if(!order.custom && order.items && order.items[0]){
+      const v = VENDORS.find(x => x.id == order.items[0].vendorId);
+      if(v && v.eta) etaMinutes = parseEtaRangeAvgMinutes(v.eta);
+    }
+    const targetTime = order.placedAt + etaMinutes * 60000;
+    const tick = () => {
+      const remain = targetTime - Date.now();
+      if(remain <= 0){
+        box.textContent = '⏱ متوقع يوصل في أي لحظة دلوقتي';
+      } else {
+        const mins = Math.floor(remain / 60000);
+        const secs = Math.floor((remain % 60000) / 1000);
+        box.textContent = `⏱ الوصول المتوقع خلال ${mins > 0 ? mins + ' د ' : ''}${secs} ث (تقريبي)`;
+      }
+    };
+    box.style.display = '';
+    tick();
+    etaTimer = setInterval(tick, 1000);
+  }
+
+  // ---------- خريطة موقع المندوب لايف ----------
+  let trackMapInstance = null;
+  let trackMapMarker = null;
+  function renderTrackingMap(order){
+    const mapEl = document.getElementById('trackMap');
+    const delivered = order.step >= TRACK_STEPS.length - 1;
+    const loc = order.driverLocation;
+    if(delivered || !loc || typeof loc.lat !== 'number' || typeof window.L === 'undefined'){
+      mapEl.style.display = 'none';
+      return;
+    }
+    mapEl.style.display = '';
+    if(!trackMapInstance){
+      trackMapInstance = L.map('trackMap', { zoomControl: false, attributionControl: false }).setView([loc.lat, loc.lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(trackMapInstance);
+      trackMapMarker = L.marker([loc.lat, loc.lng]).addTo(trackMapInstance).bindPopup('🛵 المندوب');
+    } else {
+      trackMapInstance.setView([loc.lat, loc.lng]);
+      trackMapMarker.setLatLng([loc.lat, loc.lng]);
+      // بنعمل invalidateSize لو الخريطة كانت مخفية وبقت ظاهرة تاني عشان تترسم صح
+      setTimeout(() => { try{ trackMapInstance.invalidateSize(); }catch(e){} }, 50);
+    }
+  }
+  function resetTrackingMap(){
+    if(trackMapInstance){ try{ trackMapInstance.remove(); }catch(e){} trackMapInstance = null; trackMapMarker = null; }
+    if(etaTimer){ clearInterval(etaTimer); etaTimer = null; }
+  }
+
+  // ---------- تقييم الطلب بعد التسليم ----------
+  let vendorStars = 0;
+  let driverStars = 0;
+  function renderRatingBox(order){
+    const box = document.getElementById('ratingBox');
+    const delivered = order.step >= TRACK_STEPS.length - 1;
+    if(!delivered){ box.innerHTML = ''; return; }
+    if(order.rating){
+      box.innerHTML = `<div style="margin-top:16px; padding:14px; background:var(--paper-2); border-radius:14px; font-size:.85rem; text-align:center; color:var(--muted);">شكراً على تقييمك! ⭐ ${order.rating.vendorStars || '-'}</div>`;
+      return;
+    }
+    vendorStars = 0; driverStars = 0;
+    box.innerHTML = `
+      <div style="margin-top:16px; padding:14px; background:var(--paper-2); border-radius:14px;">
+        <div class="field-label" style="margin-top:0;">قيّم ${order.custom ? 'الخدمة' : (order.items[0] ? order.items[0].vendorName : 'المتجر')}</div>
+        <div id="vendorStarsRow" style="font-size:1.6rem; letter-spacing:4px; margin-bottom:10px;">${starsHtml('vendor', 0)}</div>
+        ${order.driverName ? `<div class="field-label">قيّم المندوب ${order.driverName}</div><div id="driverStarsRow" style="font-size:1.6rem; letter-spacing:4px; margin-bottom:10px;">${starsHtml('driver', 0)}</div>` : ''}
+        <textarea id="ratingComment" class="field" placeholder="تعليق (اختياري)" style="min-height:50px;"></textarea>
+        <button class="primary-btn" onclick="submitRating('${order.driverId || ''}', '${(order.items[0] && order.items[0].vendorId) || ''}')">إرسال التقييم</button>
+      </div>`;
+  }
+  function starsHtml(kind, filled){
+    return [1,2,3,4,5].map(n => `<span onclick="setStars('${kind}', ${n})" style="cursor:pointer; color:${n<=filled?'#F2A93B':'var(--line)'};">★</span>`).join('');
+  }
+  function setStars(kind, n){
+    if(kind === 'vendor'){ vendorStars = n; document.getElementById('vendorStarsRow').innerHTML = starsHtml('vendor', n); }
+    else { driverStars = n; document.getElementById('driverStarsRow').innerHTML = starsHtml('driver', n); }
+  }
+  function submitRating(driverId, vendorId){
+    if(!vendorStars && !driverStars){ showToast('اختار تقييم بالنجوم الأول'); return; }
+    const comment = document.getElementById('ratingComment').value.trim();
+    const orderId = currentTrackingOrderId;
+    const updates = { rating: { vendorStars, driverStars, comment, ratedAt: firebase.database.ServerValue.TIMESTAMP } };
+    fbDb.ref('orders/' + orderId).update(updates).then(() => {
+      if(vendorStars && vendorId) bumpAverageRating('vendors/' + vendorId, vendorStars);
+      if(driverStars && driverId) bumpAverageRating('driverRatings/' + driverId, driverStars);
+      showToast('شكراً على تقييمك! 🌟');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+  // بنستخدم transaction على فرع فرعي صغير (ratingAgg) عشان مانلمسش باقي بيانات المتجر/المندوب،
+  // ولو أكتر من عميل بيقيّم في نفس اللحظة العد يفضل صحيح
+  function bumpAverageRating(basePath, stars){
+    fbDb.ref(basePath + '/ratingAgg').transaction(current => {
+      current = current || {};
+      return { sum: (current.sum || 0) + stars, count: (current.count || 0) + 1 };
+    });
   }
   // شاشة تتبع العميل بتتحدث لايف فورًا لما المندوب يغيّر الحالة، من أي جهاز في أي مكان (عن طريق Firebase)
   function watchTrackingLive(orderId){
@@ -983,63 +1181,17 @@
 
   // ---------- Bottom nav ----------
   function switchNav(nav){
+    window.scrollTo({top: 0, behavior: 'instant'});
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === nav));
-    if(driverListenerRef){ driverListenerRef.off('value'); driverListenerRef = null; }
+    // لو كان مفتوح صفحة متجر، نقفلها عشان نرجع للتصفح العادي
+    currentVendorId = null;
+    document.getElementById('vendorPageSection').style.display = 'none';
+    document.getElementById('homeDecor').style.display = '';
+    document.getElementById('browseSection').style.display = '';
     if(nav === 'orders') renderOrdersView();
     else if(nav === 'fav') renderFavView();
     else if(nav === 'home') renderVendors();
     else if(nav === 'account') renderAccountView();
-    else if(nav === 'driver') renderDriverView();
-  }
-
-  // ---------- Driver / Captain mode ----------
-  // شاشة المندوب بتقرا من نفس قاعدة بيانات Firebase — يعني أي طلب جديد من أي عميل، على أي جهاز،
-  // في أي مكان، بيظهر هنا فورًا لايف، ولما المندوب يحدّث الحالة، شاشة العميل بتتحدث أوتوماتيك بالمثل.
-  let driverListenerRef = null;
-  let driverOrdersCache = {};
-  function renderDriverView(){
-    document.getElementById('listTitle').textContent = '🛵 طلبات جاهزة للاستلام والتوصيل';
-    const grid = document.getElementById('vendorGrid');
-    grid.innerHTML = `<div class="empty-state">جاري تحميل الطلبات...</div>`;
-    driverListenerRef = fbDb.ref('orders');
-    driverListenerRef.on('value', snap => {
-      driverOrdersCache = snap.val() || {};
-      renderDriverList();
-    });
-  }
-  function renderDriverList(){
-    const grid = document.getElementById('vendorGrid');
-    const activeEntries = Object.entries(driverOrdersCache).filter(([id, o]) => o.step < TRACK_STEPS.length - 1);
-    document.getElementById('listCount').textContent = activeEntries.length ? activeEntries.length + ' طلب نشط' : '';
-    if(!activeEntries.length){
-      grid.innerHTML = `<div class="empty-state">مفيش طلبات نشطة دلوقتي. لما عميل يطلب من الصفحة الرئيسية، هيظهر هنا فورًا.</div>`;
-      return;
-    }
-    grid.innerHTML = activeEntries.map(([id, o]) => {
-      const currentLabel = TRACK_STEPS[o.step].label;
-      const nextLabel = TRACK_STEPS[o.step + 1] ? TRACK_STEPS[o.step + 1].label : null;
-      const vendorName = o.custom ? 'طلب مخصوص' : o.items[0].vendorName;
-      const itemsSummary = o.custom ? o.items[0].item : o.items.map(i => `${i.item} ×${i.qty}`).join('، ');
-      return `
-      <div class="vendor-card" style="align-items:flex-start; cursor:default;">
-        <div class="vendor-thumb">${o.custom ? '📝' : '📦'}</div>
-        <div class="vendor-info">
-          <div class="name-row"><h4>${vendorName}</h4><span class="tag">#${id.slice(-5)}</span></div>
-          <div style="font-size:.78rem; color:var(--muted); margin:6px 0 10px; line-height:1.5;">${itemsSummary}</div>
-          <div class="vendor-meta" style="margin-bottom:10px;">
-            <span class="eta-badge">الحالة الحالية: ${currentLabel}</span>
-          </div>
-          ${nextLabel ? `<button class="primary-btn" style="margin-top:0;" onclick="driverAdvance('${id}')">تحديث الحالة إلى: ${nextLabel} ➜</button>` : ''}
-        </div>
-      </div>`;
-    }).join('');
-  }
-  function driverAdvance(orderId){
-    const order = driverOrdersCache[orderId];
-    if(!order) return;
-    fbDb.ref('orders/' + orderId + '/step').set(order.step + 1).then(() => {
-      showToast(order.step + 1 >= TRACK_STEPS.length - 1 ? 'تم تسليم الطلب 🎉' : 'تم تحديث حالة الطلب');
-    });
   }
 
   function renderOrdersView(){
@@ -1084,6 +1236,30 @@
             <div style="font-size:.8rem; color:var(--muted); margin-top:2px;">📱 ${customerPhone || '-'}</div>
             <div style="font-size:.8rem; color:var(--muted); margin-top:2px;">✉️ ${d.email || '-'}</div>
           </div>
+        </div>
+        <div style="margin-top:16px; font-size:.82rem; font-weight:800; color:var(--ink);">عناويني</div>
+        <div style="margin:10px 0;">
+          ${Object.keys(addresses).length ? Object.entries(addresses).map(([id, a]) => `
+            <div class="vendor-card" style="cursor:default; align-items:flex-start; margin-bottom:8px;">
+              <div class="vendor-thumb" style="font-size:1.1rem;">${activeAddressId===id?'📍':'🏠'}</div>
+              <div class="vendor-info">
+                <div class="name-row"><h4 style="font-size:.9rem;">${a.label || 'عنوان'}${activeAddressId===id?' <span class="tag" style="margin-right:6px;">الحالي</span>':''}</h4></div>
+                <div style="font-size:.78rem; color:var(--muted); margin:4px 0 8px;">${a.details}</div>
+                <div class="btn-row" style="display:flex; gap:8px;">
+                  ${activeAddressId!==id ? `<button class="ghost-btn" style="flex:1; padding:8px;" onclick="setActiveAddress('${id}')">استخدم ده</button>` : ''}
+                  <button class="ghost-btn" style="flex:1; padding:8px;" onclick="deleteAddress('${id}')">حذف</button>
+                </div>
+              </div>
+            </div>
+          `).join('') : `<div style="font-size:.8rem; color:var(--muted); margin-bottom:8px;">مفيش عناوين محفوظة</div>`}
+          <div class="field-label">إضافة عنوان جديد</div>
+          <select id="newAddrLabel" class="field" style="margin-bottom:8px;">
+            <option value="المنزل">المنزل</option>
+            <option value="الشغل">الشغل</option>
+            <option value="تاني">تاني</option>
+          </select>
+          <input id="newAddrDetails" class="field" placeholder="تفاصيل العنوان (الشارع، المنطقة، علامة مميزة)" style="margin-bottom:8px;">
+          <button class="ghost-btn" style="width:100%;" onclick="addAddress()">+ إضافة العنوان</button>
         </div>
         <div style="margin-top:16px; font-size:.82rem; font-weight:800; color:var(--ink);">النوع (بيحدد شكل التطبيق)</div>
         <div class="theme-choice-row" style="margin:12px 0;">
@@ -1134,7 +1310,10 @@
   function openSheet(id){ document.getElementById(id).classList.add('open'); }
   function closeSheet(id){
     document.getElementById(id).classList.remove('open');
-    if(id === 'trackSheetOverlay' && trackingListenerRef){ trackingListenerRef.off('value'); trackingListenerRef = null; }
+    if(id === 'trackSheetOverlay'){
+      if(trackingListenerRef){ trackingListenerRef.off('value'); trackingListenerRef = null; }
+      resetTrackingMap();
+    }
   }
   document.querySelectorAll('.sheet-overlay').forEach(ov => {
     ov.addEventListener('click', e => { if(e.target === ov) closeSheet(ov.id); });
@@ -1228,6 +1407,8 @@
     if(!birthDate){ showToast('اختار تاريخ ميلادك'); return; }
 
     customerPhone = phone;
+    // أول عنوان بيتسجل تلقائي كـ "المنزل" ويبقى العنوان النشط
+    const addrRef = fbDb.ref('users/' + customerId + '/addresses').push();
     fbDb.ref('users/' + customerId).update({
       firstName: firstName,
       lastName: lastName,
@@ -1236,6 +1417,8 @@
       birthDate: birthDate,
       phone: phone,
       email: email,
+      activeAddressId: addrRef.key,
+      ['addresses/' + addrRef.key]: {label: 'المنزل', details: location},
     }).then(() => {
       enterApp();
     }).catch(() => showToast('حصل خطأ، حاول تاني'));
@@ -1253,6 +1436,63 @@
     renderCats();
     renderVendors();
     startVendorsListener();
+    startAddressesListener();
+  }
+
+  // ---------- عناوين التوصيل (دفتر عناوين بدل عنوان واحد بس) ----------
+  function startAddressesListener(){
+    fbDb.ref('users/' + customerId + '/addresses').on('value', snap => {
+      addresses = snap.val() || {};
+      updateHeaderLoc();
+      if(document.getElementById('listTitle').textContent === 'حسابي') renderAccountView();
+    });
+    fbDb.ref('users/' + customerId + '/activeAddressId').on('value', snap => {
+      activeAddressId = snap.val() || null;
+      updateHeaderLoc();
+      if(document.getElementById('listTitle').textContent === 'حسابي') renderAccountView();
+    });
+  }
+
+  function activeAddressText(){
+    if(activeAddressId && addresses[activeAddressId]) return addresses[activeAddressId].details;
+    // مفيش عنوان نشط محدد؟ ناخد أول عنوان موجود
+    const first = Object.values(addresses)[0];
+    return first ? first.details : 'حدّد عنوانك';
+  }
+
+  function updateHeaderLoc(){
+    const el = document.getElementById('headerLocText');
+    if(el) el.textContent = activeAddressText();
+  }
+
+  function addAddress(){
+    const label = document.getElementById('newAddrLabel').value;
+    const details = document.getElementById('newAddrDetails').value.trim();
+    if(!details){ showToast('اكتب تفاصيل العنوان'); return; }
+    const ref = fbDb.ref('users/' + customerId + '/addresses').push();
+    ref.set({label, details}).then(() => {
+      // لو ده أول عنوان، نخليه العنوان النشط تلقائي
+      if(!activeAddressId) setActiveAddress(ref.key);
+      document.getElementById('newAddrDetails').value = '';
+      showToast('اتضاف العنوان');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  function setActiveAddress(id){
+    fbDb.ref('users/' + customerId).update({
+      activeAddressId: id,
+      location: addresses[id] ? addresses[id].details : '', // نفس القيمة القديمة عشان لوحة التحكم تفضل شغالة
+    }).then(() => showToast('اتغيّر عنوان التوصيل'));
+  }
+
+  function deleteAddress(id){
+    fbDb.ref('users/' + customerId + '/addresses/' + id).remove().then(() => {
+      if(activeAddressId === id){
+        const remaining = Object.keys(addresses).filter(k => k !== id);
+        setActiveAddress(remaining[0] || null);
+      }
+      showToast('اتشال العنوان');
+    });
   }
 </script>
 
