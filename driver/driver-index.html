@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Deliveroo Captain — تطبيق المندوب</title>
+<meta name="description" content="تطبيق مندوبي التوصيل — استقبل الطلبات ووصّلها">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -121,6 +122,7 @@
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <meta name="theme-color" content="#241A2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -234,6 +236,7 @@
   }
   firebase.initializeApp(firebaseConfig);
   const fbDb = firebase.database();
+  const fbAuth = firebase.auth();
 
   const TRACK_STEPS = [
     {label:'تم استلام الطلب', ic:'✅'},
@@ -254,12 +257,20 @@
     const phone = document.getElementById('driverPhoneInput').value.trim();
     if(!name || !phone){ showToast('اكتب الاسم ورقم الموبايل'); return; }
     driverName = name;
-    // معرّف مؤقت للمندوب في الجلسة دي — في التطبيق الحقيقي ده هيكون عن طريق تسجيل دخول حقيقي (رقم موبايل + OTP)
-    driverId = 'drv_' + phone.replace(/\D/g, '').slice(-8) + '_' + Math.random().toString(36).slice(2, 6);
     document.getElementById('driverNameDisplay').textContent = name + ' · ' + phone;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appShell').classList.add('visible');
-    startListening();
+    // لازم نعمل تسجيل دخول حقيقي في Firebase (ولو مجهول) عشان قواعد الأمان بتاعة قاعدة البيانات
+    // بتمنع القراءة/الكتابة إلا لو auth != null — من غيره التطبيق مش هيقدر يقرا أو يعدّل الأوردرات خالص.
+    // وبنستخدم الـ uid الحقيقي بتاع Firebase كـ driverId عشان لو قواعد الكتابة بتتأكد إن
+    // اللي بيعدّل الأوردر هو نفسه اللي حاطط نفسه driverId عليه (newData.child('driverId').val() == auth.uid)
+    showToast('جاري الدخول...');
+    fbAuth.signInAnonymously().then(() => {
+      driverId = fbAuth.currentUser.uid;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appShell').classList.add('visible');
+      startListening();
+    }).catch(err => {
+      showToast('تعذر تسجيل الدخول: ' + (err && err.code ? err.code : 'خطأ غير معروف'));
+    });
   }
 
   function toggleOnline(){
@@ -282,7 +293,7 @@
 
   function renderStats(){
     const entries = Object.entries(ordersCache);
-    const available = entries.filter(([id, o]) => o.step === 0 && !o.driverId).length;
+    const available = entries.filter(([id, o]) => (o.step === 1 || (o.step === 0 && o.custom)) && !o.driverId).length;
     const mine = entries.filter(([id, o]) => o.driverId === driverId && o.step < TRACK_STEPS.length - 1).length;
     const done = entries.filter(([id, o]) => o.driverId === driverId && o.step >= TRACK_STEPS.length - 1).length;
     document.getElementById('statAvailable').textContent = available;
@@ -301,7 +312,7 @@
     const entries = Object.entries(ordersCache);
 
     if(activeTab === 'available'){
-      const list = entries.filter(([id, o]) => o.step === 0 && !o.driverId);
+      const list = entries.filter(([id, o]) => (o.step === 1 || (o.step === 0 && o.custom)) && !o.driverId);
       if(!list.length){
         section.innerHTML = `<div class="empty-state"><span class="ic">📭</span>مفيش طلبات متاحة دلوقتي.<br>هتوصلك إشعارات أول ما طلب جديد يظهر.</div>`;
         return;
@@ -354,10 +365,12 @@
   }
 
   function acceptOrder(orderId){
+    const order = ordersCache[orderId];
+    if(!order) return;
     fbDb.ref('orders/' + orderId).update({
       driverId: driverId,
       driverName: driverName,
-      step: 1,
+      step: order.step + 1,
     }).then(() => {
       showToast('قبلت الطلب — روح جهّزه 🏍️');
       switchTab('mine');

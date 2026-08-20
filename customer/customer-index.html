@@ -560,7 +560,7 @@
     {id:'pharmacy', label:'صيدلية', ic:'💊'},
   ];
 
-  const VENDORS = [
+  const STATIC_VENDORS = [
     {id:1, cat:'food', name:'مطعم أبو الفرن', ic:'🍗', rating:4.7, eta:'25-35 د', tag:'مشويات', menu:[
       {name:'نص فرخة مشوية', price:120, ic:'🍗'},
       {name:'كباب حلة', price:95, ic:'🍖'},
@@ -720,6 +720,36 @@
     ]},
   ];
 
+  // متاجر حقيقية مسجّلة عن طريق تطبيق التاجر (Firebase vendors/) — بتتضاف لقائمة المتاجر الثابتة فوق
+  let realVendors = [];
+  let VENDORS = [...STATIC_VENDORS];
+
+  function mergeRealVendors(vendorsSnapVal){
+    const data = vendorsSnapVal || {};
+    realVendors = Object.keys(data)
+      .map(id => ({id, raw: data[id]}))
+      .filter(({raw}) => raw && raw.active && raw.name && raw.menu && Object.keys(raw.menu).length)
+      .map(({id, raw}) => ({
+        id,
+        cat: raw.category || 'food',
+        name: raw.name,
+        ic: raw.icon || '🏪',
+        rating: raw.rating || 'جديد',
+        eta: raw.eta || '30-45 د',
+        tag: raw.tagline || '',
+        owned: false,
+        menu: Object.values(raw.menu).map(m => ({name: m.name, price: m.price, ic: m.icon || '🍽️', sub: m.category || undefined})),
+      }));
+    VENDORS = [...STATIC_VENDORS, ...realVendors];
+  }
+
+  function startVendorsListener(){
+    fbDb.ref('vendors').on('value', snap => {
+      mergeRealVendors(snap.val());
+      renderVendors();
+    });
+  }
+
   let state = {
     activeCat: 'all',
     favs: new Set(),
@@ -759,12 +789,12 @@
       return;
     }
     grid.innerHTML = list.map(v => `
-      <div class="vendor-card" onclick="openVendor(${v.id})">
+      <div class="vendor-card" onclick="openVendor('${v.id}')">
         <div class="vendor-thumb">${v.ic}</div>
         <div class="vendor-info">
           <div class="name-row">
             <h4>${v.name}</h4>
-            <button class="fav-btn ${state.favs.has(v.id)?'active':''}" onclick="event.stopPropagation(); toggleFav(${v.id})">${state.favs.has(v.id)?'♥':'♡'}</button>
+            <button class="fav-btn ${state.favs.has(String(v.id))?'active':''}" onclick="event.stopPropagation(); toggleFav('${v.id}')">${state.favs.has(String(v.id))?'♥':'♡'}</button>
           </div>
           <div class="vendor-meta">
             ${v.owned ? `<span class="owned-badge">★ متجرنا الرسمي</span>` : `<span class="partner-badge">شريك</span>`}
@@ -786,7 +816,7 @@
   // ---------- Vendor sheet / menu ----------
   let vsActiveSub = null;
   function openVendor(id, sub){
-    const v = VENDORS.find(x => x.id === id);
+    const v = VENDORS.find(x => x.id == id);
     document.getElementById('vsName').textContent = v.name;
     document.getElementById('vsMeta').innerHTML = `${v.owned ? `<span class="owned-badge">★ متجرنا الرسمي</span> &nbsp;·&nbsp; ` : `<span class="partner-badge">شريك</span> &nbsp;·&nbsp; `}★ ${v.rating} &nbsp;·&nbsp; ⏱ ${v.eta} &nbsp;·&nbsp; ${v.tag}`;
 
@@ -797,7 +827,7 @@
     let subTabsHtml = '';
     if(subs.length){
       subTabsHtml = `<div class="cats" style="padding:0 0 12px; margin-bottom:4px;">` +
-        subs.map(s => `<button class="cat-chip ${vsActiveSub===s?'active':''}" style="min-width:auto; padding:8px 14px;" onclick="openVendor(${v.id}, '${s}')">${s}</button>`).join('') +
+        subs.map(s => `<button class="cat-chip ${vsActiveSub===s?'active':''}" style="min-width:auto; padding:8px 14px;" onclick="openVendor('${v.id}', '${s}')">${s}</button>`).join('') +
         `</div>`;
     }
 
@@ -810,8 +840,8 @@
         <div class="mi-thumb">${m.ic}</div>
         <div class="mi-info"><b>${m.name}</b><span>${m.price} ج.م</span></div>
         ${qty > 0
-          ? `<div class="qty-pill"><button onclick="changeQty(${v.id}, '${v.name}', '${m.name}', ${m.price}, '${m.ic}', -1)">−</button><span>${qty}</span><button onclick="changeQty(${v.id}, '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button></div>`
-          : `<button class="add-btn" onclick="changeQty(${v.id}, '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button>`
+          ? `<div class="qty-pill"><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', -1)">−</button><span>${qty}</span><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button></div>`
+          : `<button class="add-btn" onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button>`
         }
       </div>`;
     }).join('');
@@ -821,11 +851,11 @@
   }
 
   function getQty(vendorId, itemName){
-    const line = state.cart.find(l => l.vendorId === vendorId && l.item === itemName);
+    const line = state.cart.find(l => l.vendorId == vendorId && l.item === itemName);
     return line ? line.qty : 0;
   }
   function changeQty(vendorId, vendorName, itemName, price, ic, delta){
-    let line = state.cart.find(l => l.vendorId === vendorId && l.item === itemName);
+    let line = state.cart.find(l => l.vendorId == vendorId && l.item === itemName);
     if(!line){
       line = {vendorId, vendorName, item:itemName, price, ic, qty:0};
       state.cart.push(line);
@@ -834,7 +864,7 @@
     if(line.qty <= 0) state.cart = state.cart.filter(l => l !== line);
     updateCartBadge();
     // re-render whichever sheet is open
-    const v = VENDORS.find(x => x.id === vendorId);
+    const v = VENDORS.find(x => x.id == vendorId);
     if(document.getElementById('vendorSheetOverlay').classList.contains('open')) openVendor(vendorId);
   }
 
@@ -857,7 +887,7 @@
         <div class="cart-line">
           <div class="mi-thumb">${l.ic}</div>
           <div class="cl-info"><b>${l.item}</b><span>${l.vendorName}</span></div>
-          <div class="qty-pill"><button onclick="changeQty(${l.vendorId}, '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', -1)">−</button><span>${l.qty}</span><button onclick="changeQty(${l.vendorId}, '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', 1)">+</button></div>
+          <div class="qty-pill"><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', -1)">−</button><span>${l.qty}</span><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', 1)">+</button></div>
         </div>
       `).join('');
       const subtotal = state.cart.reduce((a,l) => a + l.price*l.qty, 0);
@@ -1079,7 +1109,7 @@
 
   function renderFavView(){
     document.getElementById('listTitle').textContent = 'المفضلة';
-    const favVendors = VENDORS.filter(v => state.favs.has(v.id));
+    const favVendors = VENDORS.filter(v => state.favs.has(String(v.id)));
     document.getElementById('listCount').textContent = favVendors.length ? favVendors.length + ' مكان' : '';
     const grid = document.getElementById('vendorGrid');
     if(!favVendors.length){
@@ -1087,12 +1117,12 @@
       return;
     }
     grid.innerHTML = favVendors.map(v => `
-      <div class="vendor-card" onclick="openVendor(${v.id})">
+      <div class="vendor-card" onclick="openVendor('${v.id}')">
         <div class="vendor-thumb">${v.ic}</div>
         <div class="vendor-info">
           <div class="name-row">
             <h4>${v.name}</h4>
-            <button class="fav-btn active" onclick="event.stopPropagation(); toggleFav(${v.id}); renderFavView();">♥</button>
+            <button class="fav-btn active" onclick="event.stopPropagation(); toggleFav('${v.id}'); renderFavView();">♥</button>
           </div>
           <div class="vendor-meta"><span class="rating">★ ${v.rating}</span><span class="tag">${v.tag}</span><span class="eta-badge">⏱ ${v.eta}</span></div>
         </div>
@@ -1136,7 +1166,9 @@
       } else if(err && err.code === 'auth/unauthorized-domain'){
         showToast('الدومين ده مش مصرّح له في Firebase');
       } else {
-        showToast('حصل خطأ في تسجيل الدخول، حاول تاني');
+        // بنوري كود الخطأ نفسه في الرسالة عشان تسهّل تشخيص أي مشكلة تسجيل دخول
+        showToast('خطأ: ' + (err && err.code ? err.code : 'غير معروف'));
+        console.error('Google sign-in error:', err);
       }
     });
   }
@@ -1220,6 +1252,7 @@
     document.getElementById('appShell').style.display = 'block';
     renderCats();
     renderVendors();
+    startVendorsListener();
   }
 </script>
 

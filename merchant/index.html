@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deliveroo Merchant — تطبيق التاجر</title>
+<meta name="description" content="تطبيق التجار والمتاجر الشريكة — سجّل متجرك واستقبل الطلبات">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241A2E;
+    --ink-2:#33253F;
+    --paper:#FBF6EF;
+    --pomegranate:#D64550;
+    --saffron:#F2A93B;
+    --mint:#3FA796;
+    --line:rgba(251,246,239,.12);
+    --muted:rgba(251,246,239,.55);
+    --white:#fff;
+    --radius:18px;
+    --shadow: 0 10px 30px -12px rgba(36,26,46,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Tajawal',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{font-family:'Cairo',sans-serif;}
+  button{font-family:inherit; cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  /* ---------- Login / setup screens ---------- */
+  .center-screen{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:30px; text-align:center;
+  }
+  .center-screen.left-align{align-items:stretch; justify-content:flex-start; text-align:right; padding-top:50px;}
+  .center-screen .logo{font-size:2.4rem; margin-bottom:6px;}
+  .center-screen h1{font-size:1.4rem; margin:0 0 4px;}
+  .center-screen p{color:rgba(251,246,239,.65); font-size:.85rem; margin:0 0 26px; line-height:1.8;}
+  .field{width:100%; max-width:340px; margin:0 auto 12px;}
+  .center-screen.left-align .field{max-width:none;}
+  .field label{display:block; font-size:.78rem; color:rgba(251,246,239,.6); margin-bottom:6px; font-weight:700;}
+  .field input, .field select, .field textarea{
+    width:100%; border:1.5px solid rgba(251,246,239,.2); border-radius:14px;
+    padding:13px 15px; background:rgba(251,246,239,.06); color:var(--paper); font-family:inherit;
+    font-size:.92rem; outline:none;
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .field input::placeholder, .field textarea::placeholder{color:rgba(251,246,239,.4);}
+  .btn-primary{
+    width:100%; max-width:340px; background:var(--mint); color:#fff; border:none; border-radius:14px;
+    padding:14px; font-weight:700; font-size:.95rem; margin:0 auto; display:block;
+  }
+  .btn-secondary{
+    background:rgba(251,246,239,.08); color:var(--paper); border:none; border-radius:12px;
+    padding:12px 16px; font-weight:700; font-size:.85rem;
+  }
+  .btn-danger{background:rgba(214,69,80,.18); color:#F4909A; border:none; border-radius:12px; padding:10px 14px; font-weight:700; font-size:.8rem;}
+  .google-btn{
+    width:100%; max-width:340px; background:var(--paper); color:var(--ink); border:none; border-radius:14px;
+    padding:14px; font-weight:700; font-size:.92rem; display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto;
+  }
+  .login-error{color:#F4909A; font-size:.82rem; margin-top:14px; display:none; max-width:320px;}
+
+  /* ---------- App shell ---------- */
+  .app-shell{display:none;}
+  .app-shell.visible{display:block;}
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(135deg, #2E2140, var(--ink));
+    padding:16px 18px 18px; border-radius:0 0 22px 22px; box-shadow:var(--shadow);
+  }
+  .topbar-row{display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:8px; font-family:'Cairo',sans-serif; font-weight:800; font-size:1.05rem;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--mint);}
+  .store-name{font-size:.78rem; color:rgba(251,246,239,.7); margin-top:2px;}
+  .logout-btn{background:rgba(251,246,239,.1); border:none; color:var(--paper); border-radius:10px; padding:8px 14px; font-size:.78rem; font-weight:700;}
+
+  .pending-banner{
+    margin-top:14px; background:rgba(242,169,63,.18); border:1px solid rgba(242,169,63,.4); color:var(--saffron);
+    border-radius:14px; padding:12px 14px; font-size:.8rem; line-height:1.7;
+  }
+
+  .tabs{display:flex; gap:8px; padding:16px 18px 8px;}
+  .tab-btn{
+    flex:1; background:rgba(251,246,239,.06); border:1.5px solid transparent; color:rgba(251,246,239,.6);
+    border-radius:12px; padding:10px; font-size:.8rem; font-weight:700;
+  }
+  .tab-btn.active{background:var(--paper); color:var(--ink); border-color:var(--paper);}
+
+  .section{padding:6px 18px 90px;}
+
+  .order-card, .product-card, .info-card{
+    background:rgba(251,246,239,.06); border:1.5px solid rgba(251,246,239,.1); border-radius:18px;
+    padding:16px; margin-bottom:12px;
+  }
+  .order-card .oc-head, .product-card .pc-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px;}
+  .order-card .oc-head h4, .product-card .pc-head h4{margin:0; font-size:1rem; font-family:'Cairo',sans-serif;}
+  .order-card .oc-id{font-size:.72rem; color:rgba(251,246,239,.5); background:rgba(251,246,239,.08); padding:3px 8px; border-radius:8px; flex-shrink:0;}
+  .order-card .oc-items{font-size:.82rem; color:rgba(251,246,239,.75); line-height:1.7; margin-bottom:12px;}
+  .order-card .oc-meta{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .badge{font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:8px;}
+  .badge.status{background:rgba(242,169,63,.2); color:var(--saffron);}
+  .badge.other{background:rgba(251,246,239,.08); color:var(--muted);}
+
+  .btn-row{display:flex; gap:8px;}
+  .btn-primary.small{padding:11px; font-size:.83rem; max-width:none; flex:1;}
+
+  .empty-state{text-align:center; padding:50px 20px; color:rgba(251,246,239,.5); font-size:.85rem; line-height:1.7;}
+  .empty-state .ic{font-size:2.2rem; display:block; margin-bottom:10px;}
+
+  .add-product-form{background:rgba(251,246,239,.06); border:1.5px solid rgba(251,246,239,.1); border-radius:18px; padding:16px; margin-bottom:16px;}
+  .add-product-form h4{margin:0 0 12px; font-size:.95rem;}
+  .add-product-form .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .add-product-form .field{margin-bottom:10px;}
+
+  .toast{
+    position:fixed; bottom:24px; right:50%; transform:translateX(50%);
+    background:var(--paper); color:var(--ink); padding:12px 22px; border-radius:12px;
+    font-size:.85rem; font-weight:700; z-index:200; opacity:0; pointer-events:none; transition:.25s;
+    box-shadow:var(--shadow); max-width:85%; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(50%) translateY(-6px);}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<meta name="theme-color" content="#241A2E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Merchant">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png" type="image/png">
+<link rel="icon" href="icon-512.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- ---------- Login ---------- -->
+<div class="center-screen" id="loginScreen">
+  <div style="margin-bottom:14px;">
+    <svg width="170" height="52" viewBox="0 0 260 60" dir="ltr" style="direction:ltr;">
+      <defs><clipPath id="beeMerLogin"><ellipse cx="34" cy="30" rx="17" ry="10.5"/></clipPath></defs>
+      <line x1="0" y1="38" x2="10" y2="38" stroke="var(--mint)" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+      <line x1="2" y1="44" x2="9" y2="44" stroke="var(--mint)" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+      <ellipse cx="24" cy="22" rx="10" ry="6" fill="var(--paper)" opacity=".3" transform="rotate(-18 24 22)"/>
+      <ellipse cx="36" cy="20" rx="10" ry="6" fill="var(--paper)" opacity=".25" transform="rotate(12 36 20)"/>
+      <ellipse cx="34" cy="30" rx="17" ry="10.5" fill="var(--paper)"/>
+      <g clip-path="url(#beeMerLogin)">
+        <rect x="24" y="19" width="5.5" height="22" fill="var(--saffron)"/>
+        <rect x="36" y="19" width="5.5" height="22" fill="var(--saffron)"/>
+      </g>
+      <circle cx="16" cy="30" r="6.5" fill="var(--paper)"/>
+      <path d="M14 25 Q9 17 5 14" stroke="var(--paper)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M19 25 Q19 16 22 13" stroke="var(--paper)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M50 30 L58 30 L50 25 Z" fill="var(--paper)"/>
+      <text x="72" y="28" font-family="Cairo, sans-serif" font-weight="800" font-size="24" font-style="italic" fill="var(--paper)">Deliveroo</text>
+      <text x="74" y="44" font-family="Tajawal, sans-serif" font-weight="700" font-size="11" letter-spacing="4" fill="var(--saffron)">MERCHANT</text>
+    </svg>
+  </div>
+  <h1>تطبيق التاجر</h1>
+  <p>سجّل دخولك بحساب Google عشان تفتح متجرك على Deliveroo وتستقبل الطلبات</p>
+  <button class="google-btn" onclick="merchantLogin()">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+    الدخول بحساب Google
+  </button>
+  <div class="login-error" id="loginError"></div>
+</div>
+
+<!-- ---------- Store setup (first time) ---------- -->
+<div class="center-screen left-align" id="setupScreen" style="display:none;">
+  <div style="text-align:center; margin-bottom:22px;">
+    <div class="logo">🏪</div>
+    <h1>سجّل متجرك</h1>
+    <p>املا بيانات متجرك عشان يظهر لعملاء Deliveroo. بعد التسجيل، متجرك بيتراجع من فريق Deliveroo قبل ما يظهر للعملاء.</p>
+  </div>
+  <div class="field">
+    <label>اسم المتجر</label>
+    <input id="storeNameInput" placeholder="مثال: مطعم أبو الفرن">
+  </div>
+  <div class="field">
+    <label>نوع المتجر</label>
+    <select id="storeCategoryInput">
+      <option value="food">مطعم</option>
+      <option value="grocery">ماركت / بقالة</option>
+      <option value="sweets">حلويات</option>
+      <option value="pharmacy">صيدلية</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>رقم موبايل المتجر</label>
+    <input id="storePhoneInput" type="tel" placeholder="01xxxxxxxxx" maxlength="11">
+  </div>
+  <div class="field">
+    <label>أيقونة المتجر (إيموجي)</label>
+    <input id="storeIconInput" placeholder="مثال: 🍗" maxlength="4" value="🏪">
+  </div>
+  <div class="field">
+    <label>وصف مختصر عن المتجر</label>
+    <textarea id="storeTaglineInput" placeholder="مثال: مشويات وأكل بيتي طازة"></textarea>
+  </div>
+  <button class="btn-primary" onclick="createStore()">سجّل متجرك ✅</button>
+</div>
+
+<!-- ---------- Main app ---------- -->
+<div class="app-shell" id="appShell">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <div class="brand">
+          <span id="storeIconDisplay">🏪</span>
+          <span style="font-style:italic; letter-spacing:.3px;">Deliveroo <span style="font-size:.72rem; opacity:.7; font-style:normal;">Merchant</span></span>
+        </div>
+        <div class="store-name" id="storeNameDisplay"></div>
+      </div>
+      <button class="logout-btn" onclick="merchantLogout()">خروج</button>
+    </div>
+    <div class="pending-banner" id="pendingBanner" style="display:none;">
+      ⏳ متجرك قيد المراجعة من فريق Deliveroo. تقدر تضيف منتجاتك دلوقتي، ومتجرك هيظهر للعملاء بعد الموافقة.
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="orders" onclick="switchTab('orders')">الطلبات</button>
+    <button class="tab-btn" data-tab="products" onclick="switchTab('products')">المنتجات</button>
+    <button class="tab-btn" data-tab="store" onclick="switchTab('store')">المتجر</button>
+  </div>
+
+  <div class="section" id="mainSection">
+    <div class="empty-state">جاري التحميل...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcYku_xGf7_oOm7uchbj5WYSPWAbl2XcM",
+    authDomain: "deliveroo-app-994df.firebaseapp.com",
+    databaseURL: "https://deliveroo-app-994df-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "deliveroo-app-994df",
+    storageBucket: "deliveroo-app-994df.firebasestorage.app",
+    messagingSenderId: "1033005656970",
+    appId: "1:1033005656970:web:e8c18489ee21cfe422b673",
+  };
+  // لو مكتبة Firebase مش اتحمّلت (مفيش نت، أو البيئة بتمنع الملفات الخارجية)، نوضح السبب للمستخدم بدل ما الصفحة تقف من غير رسالة
+  if(typeof firebase === 'undefined'){
+    document.body.innerHTML = `
+      <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; font-family:Tajawal,sans-serif; color:#FBF6EF;">
+        <div style="font-size:2.4rem; margin-bottom:14px;">⚠️</div>
+        <h1 style="font-family:Cairo,sans-serif; font-size:1.2rem; margin:0 0 10px;">تعذر الاتصال بقاعدة البيانات</h1>
+        <p style="color:rgba(251,246,239,.6); font-size:.88rem; line-height:1.9; max-width:340px; margin:0;">
+          مكتبة Firebase مش اتحمّلت. تأكد إنك متصل بالإنترنت، ويفضّل تحمّل الملف على جهازك وتفتحه من متصفح عادي (زي Chrome) بدل المعاينة السريعة.
+        </p>
+      </div>`;
+    throw new Error('Firebase SDK failed to load');
+  }
+  firebase.initializeApp(firebaseConfig);
+  const fbDb = firebase.database();
+  const fbAuth = firebase.auth();
+
+  const STEPS = ['تم استلام الطلب','جاري التحضير','المندوب في الطريق','تم التوصيل'];
+
+  let merchantId = null;
+  let vendorData = null;
+  let ordersCache = {};
+  let activeTab = 'orders';
+  let editingProductId = null;
+
+  function merchantLogin(){
+    const provider = new firebase.auth.GoogleAuthProvider();
+    fbAuth.signInWithPopup(provider).catch(err => {
+      if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')){
+        fbAuth.signInWithRedirect(provider);
+      } else if(err && err.code === 'auth/unauthorized-domain'){
+        showLoginError('الدومين ده مش مصرّح له في Firebase.');
+      } else {
+        showLoginError('تعذر تسجيل الدخول: ' + (err && err.code ? err.code : 'خطأ غير معروف'));
+      }
+    });
+  }
+  function merchantLogout(){ fbAuth.signOut().then(() => location.reload()); }
+
+  function showLoginError(msg){
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  fbAuth.onAuthStateChanged(user => {
+    if(!user){
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('appShell').classList.remove('visible');
+      return;
+    }
+    merchantId = user.uid;
+    fbDb.ref('vendors/' + merchantId).once('value').then(snap => {
+      const data = snap.val();
+      if(data && data.name){
+        vendorData = data;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('setupScreen').style.display = 'none';
+        startDashboard();
+      } else {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('setupScreen').style.display = 'flex';
+      }
+    });
+  });
+
+  function createStore(){
+    const name = document.getElementById('storeNameInput').value.trim();
+    const category = document.getElementById('storeCategoryInput').value;
+    const phone = document.getElementById('storePhoneInput').value.trim();
+    const icon = document.getElementById('storeIconInput').value.trim() || '🏪';
+    const tagline = document.getElementById('storeTaglineInput').value.trim();
+    if(!name){ showToast('اكتب اسم المتجر'); return; }
+    if(!/^01[0-9]{9}$/.test(phone)){ showToast('اكتب رقم موبايل مصري صحيح (01xxxxxxxxx)'); return; }
+    const data = {
+      name, category, phone, icon, tagline,
+      active: false,
+      ownerEmail: fbAuth.currentUser.email || '',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+    };
+    fbDb.ref('vendors/' + merchantId).set(data).then(() => {
+      vendorData = data;
+      document.getElementById('setupScreen').style.display = 'none';
+      startDashboard();
+      showToast('تم تسجيل متجرك! دلوقتي ضيف منتجاتك 🎉');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  function startDashboard(){
+    document.getElementById('appShell').classList.add('visible');
+    fbDb.ref('vendors/' + merchantId).on('value', snap => {
+      vendorData = snap.val() || vendorData;
+      renderTopbar();
+      if(activeTab === 'store' || activeTab === 'products') render();
+    });
+    fbDb.ref('orders').on('value', snap => {
+      ordersCache = snap.val() || {};
+      if(activeTab === 'orders') render();
+    });
+    renderTopbar();
+    render();
+  }
+
+  function renderTopbar(){
+    document.getElementById('storeIconDisplay').textContent = vendorData.icon || '🏪';
+    document.getElementById('storeNameDisplay').textContent = vendorData.name || '';
+    document.getElementById('pendingBanner').style.display = vendorData.active ? 'none' : 'block';
+  }
+
+  function switchTab(tab){
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    render();
+  }
+
+  function render(){
+    const section = document.getElementById('mainSection');
+    if(activeTab === 'orders') section.innerHTML = renderOrders();
+    else if(activeTab === 'products') section.innerHTML = renderProducts();
+    else section.innerHTML = renderStore();
+  }
+
+  // ---------- Orders ----------
+  function myOrderEntries(){
+    return Object.entries(ordersCache).filter(([id, o]) => Array.isArray(o.items) && o.items.some(i => i.vendorId == merchantId));
+  }
+
+  function renderOrders(){
+    const list = myOrderEntries().sort((a,b) => (b[1].placedAt||0) - (a[1].placedAt||0));
+    if(!list.length) return `<div class="empty-state"><span class="ic">📭</span>لسه مفيش طلبات لمتجرك.<br>أول ما عميل يطلب من متجرك، هيظهر هنا فورًا.</div>`;
+    return list.map(([id, o]) => {
+      const myItems = o.items.filter(i => i.vendorId == merchantId);
+      const itemsSummary = myItems.map(i => `${i.item} ×${i.qty}`).join('، ');
+      const mySubtotal = myItems.reduce((a,i) => a + (i.price||0)*(i.qty||1), 0);
+      const otherVendors = o.items.some(i => i.vendorId != merchantId);
+      const currentLabel = STEPS[Math.min(o.step, STEPS.length-1)];
+      let actionHtml;
+      if(o.step === 0){
+        actionHtml = `<div class="btn-row"><button class="btn-primary small" onclick="acceptOrder('${id}')">قبول الطلب وابدأ التحضير ✅</button></div>`;
+      } else {
+        actionHtml = `<span class="badge status">${currentLabel}</span>`;
+      }
+      return `
+      <div class="order-card">
+        <div class="oc-head">
+          <h4>${o.custom ? 'طلب مخصوص' : 'طلب جديد'}</h4>
+          <span class="oc-id">#${id.slice(-5)}</span>
+        </div>
+        <div class="oc-items">${itemsSummary}</div>
+        <div class="oc-meta">
+          <span class="badge other">💰 ${mySubtotal.toLocaleString('ar-EG')} ج.م</span>
+          ${otherVendors ? `<span class="badge other">فيه أصناف من متاجر تانية في نفس الأوردر</span>` : ''}
+        </div>
+        ${actionHtml}
+      </div>`;
+    }).join('');
+  }
+
+  function acceptOrder(orderId){
+    const order = ordersCache[orderId];
+    if(!order || order.step !== 0) return;
+    fbDb.ref('orders/' + orderId + '/step').set(1).then(() => {
+      showToast('قبلت الطلب — جهّزه دلوقتي 👨‍🍳');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  // ---------- Products ----------
+  function renderProducts(){
+    const menu = (vendorData && vendorData.menu) ? Object.entries(vendorData.menu) : [];
+    const formHtml = `
+      <div class="add-product-form">
+        <h4>${editingProductId ? 'تعديل المنتج' : 'إضافة منتج جديد'}</h4>
+        <div class="field"><input id="prodNameInput" placeholder="اسم المنتج"></div>
+        <div class="row2">
+          <div class="field"><input id="prodPriceInput" type="number" placeholder="السعر (ج.م)"></div>
+          <div class="field"><input id="prodIconInput" placeholder="إيموجي" maxlength="4"></div>
+        </div>
+        <div class="field"><input id="prodCategoryInput" placeholder="تصنيف فرعي (اختياري — مثال: مشروبات)"></div>
+        <div class="btn-row">
+          <button class="btn-primary small" onclick="saveProduct()">${editingProductId ? 'حفظ التعديل' : 'إضافة'}</button>
+          ${editingProductId ? `<button class="btn-secondary" onclick="cancelEditProduct()">إلغاء</button>` : ''}
+        </div>
+      </div>`;
+    if(!menu.length) return formHtml + `<div class="empty-state"><span class="ic">🍽️</span>لسه مفيش منتجات. ضيف أول منتج في متجرك.</div>`;
+    const listHtml = menu.map(([pid, p]) => `
+      <div class="product-card">
+        <div class="pc-head">
+          <h4>${p.icon || '🍽️'} ${p.name}</h4>
+          <span class="oc-id">${p.price} ج.م</span>
+        </div>
+        ${p.category ? `<div class="oc-items">${p.category}</div>` : ''}
+        <div class="btn-row">
+          <button class="btn-secondary" style="flex:1;" onclick="editProduct('${pid}')">تعديل</button>
+          <button class="btn-danger" onclick="deleteProduct('${pid}')">حذف</button>
+        </div>
+      </div>`).join('');
+    return formHtml + listHtml;
+  }
+
+  function saveProduct(){
+    const name = document.getElementById('prodNameInput').value.trim();
+    const price = parseFloat(document.getElementById('prodPriceInput').value);
+    const icon = document.getElementById('prodIconInput').value.trim() || '🍽️';
+    const category = document.getElementById('prodCategoryInput').value.trim();
+    if(!name){ showToast('اكتب اسم المنتج'); return; }
+    if(isNaN(price) || price < 0){ showToast('اكتب سعر صحيح'); return; }
+    const data = { name, price, icon };
+    if(category) data.category = category;
+    const ref = editingProductId
+      ? fbDb.ref('vendors/' + merchantId + '/menu/' + editingProductId)
+      : fbDb.ref('vendors/' + merchantId + '/menu').push();
+    ref.set(data).then(() => {
+      showToast(editingProductId ? 'اتحفظ التعديل' : 'المنتج اتضاف ✅');
+      editingProductId = null;
+      render();
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  function editProduct(pid){
+    const p = vendorData.menu[pid];
+    if(!p) return;
+    editingProductId = pid;
+    render();
+    document.getElementById('prodNameInput').value = p.name || '';
+    document.getElementById('prodPriceInput').value = p.price || '';
+    document.getElementById('prodIconInput').value = p.icon || '';
+    document.getElementById('prodCategoryInput').value = p.category || '';
+  }
+
+  function cancelEditProduct(){
+    editingProductId = null;
+    render();
+  }
+
+  function deleteProduct(pid){
+    fbDb.ref('vendors/' + merchantId + '/menu/' + pid).remove().then(() => {
+      showToast('اتشال المنتج');
+      if(editingProductId === pid) editingProductId = null;
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  // ---------- Store settings ----------
+  function renderStore(){
+    return `
+      <div class="info-card">
+        <div class="pc-head"><h4>بيانات المتجر</h4><span class="badge ${vendorData.active ? 'status' : 'other'}">${vendorData.active ? 'مفعّل وظاهر للعملاء' : 'قيد المراجعة'}</span></div>
+      </div>
+      <div class="field"><label>اسم المتجر</label><input id="storeNameEdit" value="${(vendorData.name||'').replace(/"/g,'&quot;')}"></div>
+      <div class="field"><label>نوع المتجر</label>
+        <select id="storeCategoryEdit">
+          <option value="food" ${vendorData.category==='food'?'selected':''}>مطعم</option>
+          <option value="grocery" ${vendorData.category==='grocery'?'selected':''}>ماركت / بقالة</option>
+          <option value="sweets" ${vendorData.category==='sweets'?'selected':''}>حلويات</option>
+          <option value="pharmacy" ${vendorData.category==='pharmacy'?'selected':''}>صيدلية</option>
+        </select>
+      </div>
+      <div class="field"><label>رقم موبايل المتجر</label><input id="storePhoneEdit" value="${(vendorData.phone||'').replace(/"/g,'&quot;')}"></div>
+      <div class="field"><label>أيقونة المتجر (إيموجي)</label><input id="storeIconEdit" value="${(vendorData.icon||'🏪').replace(/"/g,'&quot;')}" maxlength="4"></div>
+      <div class="field"><label>وصف مختصر</label><textarea id="storeTaglineEdit">${vendorData.tagline||''}</textarea></div>
+      <button class="btn-primary" onclick="saveStore()">حفظ التعديلات</button>
+    `;
+  }
+
+  function saveStore(){
+    const name = document.getElementById('storeNameEdit').value.trim();
+    const category = document.getElementById('storeCategoryEdit').value;
+    const phone = document.getElementById('storePhoneEdit').value.trim();
+    const icon = document.getElementById('storeIconEdit').value.trim() || '🏪';
+    const tagline = document.getElementById('storeTaglineEdit').value.trim();
+    if(!name){ showToast('اكتب اسم المتجر'); return; }
+    fbDb.ref('vendors/' + merchantId).update({ name, category, phone, icon, tagline }).then(() => {
+      showToast('اتحفظت بيانات المتجر');
+    }).catch(() => showToast('حصل خطأ، حاول تاني'));
+  }
+
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+</script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>

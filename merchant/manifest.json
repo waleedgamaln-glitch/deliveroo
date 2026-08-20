@@ -1,0 +1,45 @@
+{
+  "id": "/",
+  "name": "Deliveroo Merchant",
+  "short_name": "Merchant",
+  "description": "تطبيق التجار والمتاجر الشريكة — سجّل متجرك واستقبل الطلبات",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#241A2E",
+  "theme_color": "#241A2E",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "business",
+    "food",
+    "shopping"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
