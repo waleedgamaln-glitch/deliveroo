@@ -1158,20 +1158,26 @@
   }
 
   function signInWithGoogle(){
+    // بنستخدم signInWithRedirect على طول من غير ما نجرب popup الأول — الـ popup مش موثوق على الموبايل
+    // وبيسبب "بيفضل يحمل ومبيرجعش حاجة"
     const provider = new firebase.auth.GoogleAuthProvider();
-    // نجرب popup الأول، ولو المتصفح منعها نرجع لـ redirect (بيشتغل في حالات أكتر)
-    fbAuth.signInWithPopup(provider).catch(err => {
-      if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')){
-        fbAuth.signInWithRedirect(provider);
-      } else if(err && err.code === 'auth/unauthorized-domain'){
+    fbAuth.signInWithRedirect(provider).catch(err => {
+      if(err && err.code === 'auth/unauthorized-domain'){
         showToast('الدومين ده مش مصرّح له في Firebase');
       } else {
-        // بنوري كود الخطأ نفسه في الرسالة عشان تسهّل تشخيص أي مشكلة تسجيل دخول
         showToast('خطأ: ' + (err && err.code ? err.code : 'غير معروف'));
         console.error('Google sign-in error:', err);
       }
     });
   }
+
+  // بيتنفّذ لما المستخدم يرجع من صفحة تسجيل دخول جوجل بعد signInWithRedirect
+  fbAuth.getRedirectResult().catch(err => {
+    if(err && err.code){
+      showToast('خطأ: ' + err.code);
+      console.error('Google sign-in error:', err);
+    }
+  });
 
   fbAuth.onAuthStateChanged(user => {
     if(!user){ showAuthStep(1); return; }

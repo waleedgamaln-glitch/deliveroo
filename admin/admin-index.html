@@ -223,12 +223,11 @@
   let ordersCache = {}, usersCache = {}, vendorsCache = {};
 
   function adminLogin(){
+    // بنستخدم signInWithRedirect على طول من غير ما نجرب popup الأول — الـ popup مش موثوق على الموبايل
+    // وبيسبب "بيفضل يحمل ومبيرجعش حاجة"
     const provider = new firebase.auth.GoogleAuthProvider();
-    // نجرب popup الأول، ولو المتصفح منعها نرجع لـ redirect (بيشتغل في حالات أكتر)
-    auth.signInWithPopup(provider).catch(err => {
-      if(err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')){
-        auth.signInWithRedirect(provider);
-      } else if(err && err.code === 'auth/unauthorized-domain'){
+    auth.signInWithRedirect(provider).catch(err => {
+      if(err && err.code === 'auth/unauthorized-domain'){
         showLoginError('الدومين ده مش مصرّح له في Firebase. ارفع الملف على استضافة (زي Firebase Hosting) أو ضيف الدومين في Authentication ← Settings ← Authorized domains');
       } else {
         showLoginError('تعذر تسجيل الدخول: ' + (err && err.code ? err.code : 'خطأ غير معروف'));
@@ -236,6 +235,15 @@
     });
   }
   function adminLogout(){ auth.signOut().then(() => location.reload()); }
+
+  // بيتنفّذ لما المستخدم يرجع من صفحة تسجيل دخول جوجل بعد signInWithRedirect
+  auth.getRedirectResult().catch(err => {
+    if(err && err.code === 'auth/unauthorized-domain'){
+      showLoginError('الدومين ده مش مصرّح له في Firebase.');
+    } else if(err && err.code){
+      showLoginError('تعذر تسجيل الدخول: ' + err.code);
+    }
+  });
 
   function showLoginError(msg){
     const el = document.getElementById('loginError');
