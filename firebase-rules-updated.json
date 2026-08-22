@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null && auth.token.email == 'waleedgamaln@gmail.com'",
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "presence": {
+      ".read": "auth != null && auth.token.email == 'waleedgamaln@gmail.com'",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "orders": {
+      ".read": "auth != null",
+      ".indexOn": ["customerId"],
+      "$orderId": {
+        ".write": "auth != null && (!data.exists() || data.child('customerId').val() == auth.uid || newData.child('driverId').val() == auth.uid)",
+        ".validate": "newData.hasChildren(['items', 'step', 'customerId'])"
+      }
+    },
+    "vendors": {
+      ".read": "auth != null",
+      "$vendorId": {
+        ".write": "auth != null && (auth.uid == $vendorId || auth.token.email == 'waleedgamaln@gmail.com')",
+        "ratingAgg": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "driverRatings": {
+      ".read": "auth != null",
+      "$driverId": {
+        "ratingAgg": {
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}

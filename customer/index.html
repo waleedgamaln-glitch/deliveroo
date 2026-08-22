@@ -688,6 +688,8 @@
   // معرّف العميل بقى ثابت فعليًا = رقم حساب جوجل (uid)، مش عشوائي — عشان طلباته وبياناته تفضل موجودة كل ما يرجع يسجل دخول
   let customerId = null;
   let customerPhone = null;
+  let customerName = '';
+  let customerLocation = '';
   let addresses = {};
   let activeAddressId = null;
   let selectedThemeChoice = 'male';
@@ -1613,6 +1615,8 @@
       const profileComplete = data && data.firstName && data.lastName && data.gender && data.location && data.birthDate && data.phone;
       if(profileComplete){
         customerPhone = data.phone || '';
+        customerName = ((data.firstName || '') + ' ' + (data.lastName || '')).trim();
+        customerLocation = data.location || '';
         selectedThemeChoice = data.gender; // النوع نفسه هو اللي بيحدد شكل التطبيق
         enterApp();
       } else {
@@ -1660,6 +1664,8 @@
     if(!birthDate){ showToast('اختار تاريخ ميلادك'); return; }
 
     customerPhone = phone;
+    customerName = (firstName + ' ' + lastName).trim();
+    customerLocation = location;
     // أول عنوان بيتسجل تلقائي كـ "المنزل" ويبقى العنوان النشط
     const addrRef = fbDb.ref('users/' + customerId + '/addresses').push();
     fbDb.ref('users/' + customerId).update({
@@ -1690,6 +1696,25 @@
     renderVendors();
     startVendorsListener();
     startAddressesListener();
+    setupPresence();
+  }
+
+  // ---------- "أونلاين الآن" — بيبان للأدمن مين فاتح التطبيق دلوقتي ----------
+  // بنستخدم .info/connected بتاعة Firebase نفسها (مش أونلاين المتصفح العادي) عشان تعرف فعليًا لو
+  // الاتصال بقاعدة البيانات شغال، و onDisconnect() بيشيل السجل تلقائيًا أول ما التاب يتقفل أو النت يقطع.
+  function setupPresence(){
+    if(!customerId) return;
+    fbDb.ref('.info/connected').on('value', snap => {
+      if(snap.val() !== true) return;
+      const presenceRef = fbDb.ref('presence/' + customerId);
+      presenceRef.onDisconnect().remove();
+      presenceRef.set({
+        name: customerName || 'عميل',
+        phone: customerPhone || '',
+        location: customerLocation || '',
+        since: firebase.database.ServerValue.TIMESTAMP,
+      });
+    });
   }
 
   // ---------- عناوين التوصيل (دفتر عناوين بدل عنوان واحد بس) ----------
