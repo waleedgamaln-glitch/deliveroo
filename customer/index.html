@@ -91,15 +91,15 @@
   .searchbar svg{flex-shrink:0; color:var(--muted);}
 
   /* ---------- Promo banner carousel ---------- */
-  .promo-scroller{display:flex; gap:12px; overflow-x:auto; padding:16px 18px 4px; scrollbar-width:none;}
+  .promo-scroller{display:flex; gap:10px; overflow-x:auto; padding:10px 18px 4px; scrollbar-width:none;}
   .promo-scroller::-webkit-scrollbar{display:none;}
   .promo-card{
-    flex-shrink:0; width:180px; height:96px; border-radius:16px; padding:14px;
-    display:flex; flex-direction:column; justify-content:center; gap:4px;
-    color:#fff; position:relative; overflow:hidden; box-shadow:var(--shadow);
+    flex-shrink:0; width:132px; height:70px; border-radius:14px; padding:10px;
+    display:flex; flex-direction:column; justify-content:center; gap:2px;
+    color:#fff; position:relative; overflow:hidden; box-shadow:var(--shadow); cursor:pointer;
   }
-  .promo-card b{font-size:.88rem; font-family:'Cairo',sans-serif; position:relative;}
-  .promo-card span{font-size:.7rem; opacity:.9; position:relative;}
+  .promo-card b{font-size:.74rem; font-family:'Cairo',sans-serif; position:relative;}
+  .promo-card span{font-size:.6rem; opacity:.9; position:relative; line-height:1.25;}
   .promo-card.p1{background:linear-gradient(135deg, var(--orange), var(--orange-dark));}
   .promo-card.p2{background:linear-gradient(135deg, #6C4CD8, #4A2FAE);}
   .promo-card.p3{background:linear-gradient(135deg, var(--mint), var(--mint-dark));}
@@ -124,43 +124,20 @@
   .cat-chip.active .ic{background:var(--orange); box-shadow:0 8px 16px -6px rgba(255,122,26,.55);}
   .cat-chip.active{color:var(--orange-dark);}
 
-  /* ---------- Hero: custom request (Mrsool-style signature) ---------- */
-  .own-store-banner{
-    display:flex; align-items:center; gap:14px;
-    margin:16px 18px 0; padding:16px;
-    background: linear-gradient(135deg, var(--ink), #3B2A1F);
-    border-radius:20px; color:#fff; position:relative; overflow:hidden;
-    box-shadow:var(--shadow);
+  /* ---------- Mini banners: متجرنا الرسمي + مش لاقي اللي عايزه (جنب بعض، مضغوطين) ---------- */
+  .mini-banner-row{display:flex; gap:10px; margin:10px 18px 4px;}
+  .mini-banner{
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:3px;
+    padding:12px 14px; border-radius:16px; color:#fff; position:relative; overflow:hidden;
+    cursor:pointer; min-height:74px; box-shadow:var(--shadow);
   }
-  .own-store-banner::after{
-    content:"★"; position:absolute; font-size:5.5rem; opacity:.08; left:-6px; top:-18px;
-  }
-  .own-store-banner .osb-thumb{
-    width:56px; height:56px; border-radius:14px; background:rgba(255,255,255,.12);
-    display:flex; align-items:center; justify-content:center; font-size:1.7rem; flex-shrink:0;
-  }
-  .own-store-banner .osb-info{flex:1; min-width:0;}
-  .own-store-banner .osb-info b{display:block; font-family:'Cairo',sans-serif; font-size:1.02rem;}
-  .own-store-banner .osb-info span{font-size:.76rem; opacity:.8; display:block; margin-top:2px;}
-  .own-store-banner .osb-arrow{
-    background:var(--orange); color:#fff; border:none; border-radius:12px;
-    padding:9px 16px; font-weight:700; font-size:.8rem; flex-shrink:0;
-  }
-  .hero-request{
-    margin:18px 18px 6px; padding:20px;
-    background: linear-gradient(135deg, var(--mint), var(--mint-dark));
-    border-radius:22px; color:#fff; position:relative; overflow:hidden;
-  }
-  .hero-request::after{
-    content:"✦"; position:absolute; font-size:7rem; opacity:.12; left:-10px; bottom:-30px; transform:rotate(-12deg);
-  }
-  .hero-request .eyebrow{font-size:.72rem; letter-spacing:.06em; opacity:.85; font-weight:700;}
-  .hero-request h2{margin:6px 0 6px; font-size:1.25rem; line-height:1.4;}
-  .hero-request p{margin:0 0 14px; font-size:.83rem; opacity:.9; max-width:80%;}
-  .hero-request button{
-    background:#fff; color:var(--mint-dark); border:none; border-radius:12px;
-    padding:10px 18px; font-weight:700; font-size:.85rem;
-  }
+  .mini-banner-ic{position:relative; margin-bottom:1px;}
+  .mini-banner-title{font-family:'Cairo',sans-serif; font-size:.78rem; position:relative;}
+  .mini-banner-sub{font-size:.64rem; opacity:.85; position:relative;}
+  .mini-store{background:linear-gradient(135deg, var(--ink), #3B2A1F);}
+  .mini-store::after{content:"★"; position:absolute; font-size:3.5rem; opacity:.08; left:-4px; top:-10px;}
+  .mini-request{background:linear-gradient(135deg, var(--mint), var(--mint-dark));}
+  .mini-request::after{content:"✦"; position:absolute; font-size:4rem; opacity:.12; left:-6px; bottom:-16px; transform:rotate(-12deg);}
 
   /* ---------- Section headers ---------- */
   .section{padding:22px 18px 4px;}
@@ -540,42 +517,33 @@
 
 <div id="homeDecor">
   <div class="cats" id="catScroller"></div>
+</div>
 
+<div id="homePromos">
+  <div class="section-head" style="padding:12px 18px 0; margin-bottom:8px;"><h3>عروض اليوم</h3></div>
   <div class="promo-scroller">
-    <div class="promo-card p1"><b>خصم 30% على أول طلب</b><span>استخدم كود WELCOME30</span></div>
-    <div class="promo-card p2"><b>اطلب حاجة تانية 📝</b><span>أي حاجة من أي مكان، هنجيبهالك</span></div>
-    <div class="promo-card p3"><b>توصيل مجاني 🚀</b><span>على طلبات الماركت فوق 200 ج.م</span></div>
+    <div class="promo-card p1" onclick="claimPromoCode('WELCOME30')"><b>خصم 30%</b><span>كود WELCOME30 — دوس تنسخه</span></div>
+    <div class="promo-card p2" onclick="openCustomRequest()"><b>اطلب حاجة تانية 📝</b><span>من أي مكان، هنجيبهالك</span></div>
+    <div class="promo-card p3" onclick="openOwnedStore()"><b>توصيل مجاني 🚀</b><span>فوق 200 ج.م بالماركت</span></div>
   </div>
 
-  <div class="own-store-banner" onclick="openVendor('3')">
-    <div class="osb-thumb"><img src="icons3d/shopping_bags.png" alt="" style="width:34px; height:34px; object-fit:contain;"></div>
-    <div class="osb-info">
-      <b>ماركت Deliveroo — متجرنا الرسمي</b>
-      <span>كل البراندات الأساسية بأسعار موحدة، توصيل سريع مضمون</span>
+  <div class="mini-banner-row">
+    <div class="mini-banner mini-store" onclick="openOwnedStore()">
+      <img class="mini-banner-ic" src="icons3d/shopping_bags.png" alt="" style="width:24px; height:24px; object-fit:contain;">
+      <b class="mini-banner-title">متجرنا الرسمي</b>
+      <span class="mini-banner-sub">أسعار موحدة، توصيل سريع</span>
     </div>
-    <button class="osb-arrow">تسوق الآن</button>
-  </div>
-
-  <div class="hero-request">
-    <div class="eyebrow">مش لاقي اللي عايزه؟</div>
-    <h2>اطلب أي حاجة تانية، وحنا نجيبها لك</h2>
-    <p>اكتب طلبك بالتفصيل — من أي محل أو مكان — وهنوصّله لباب البيت.</p>
-    <button onclick="openCustomRequest()">اطلب حاجة تانية ➜</button>
+    <div class="mini-banner mini-request" onclick="openCustomRequest()">
+      <span class="mini-banner-ic" style="font-size:1.25rem; line-height:1;">📝</span>
+      <b class="mini-banner-title">مش لاقي اللي عايزه؟</b>
+      <span class="mini-banner-sub">اطلب أي حاجة تانية</span>
+    </div>
   </div>
 
   <div class="section" id="recentSection" style="display:none;">
     <div class="section-head"><h3>زي اللي طلبت منه قبل كده</h3><span>الكل</span></div>
   </div>
   <div class="recent-strip" id="recentStrip"></div>
-
-  <div class="section">
-    <div class="section-head"><h3>عروض اليوم</h3><span>الكل</span></div>
-  </div>
-  <div class="offers">
-    <div class="offer-card"><b>خصم 30% على أول طلب</b><span>لأي مطعم أو ماركت — استخدم WELCOME30</span></div>
-    <div class="offer-card mint"><b>توصيل مجاني</b><span>على طلبات الماركت فوق 200 جنيه</span></div>
-    <div class="offer-card"><b>2 بـ1 على الحلويات</b><span>من محلات مختارة حتى الساعة 11م</span></div>
-  </div>
 </div>
 
 <div class="section" id="browseSection">
@@ -1084,10 +1052,35 @@
       </button>`).join('');
   }
   function selectCat(id){
+    if(id === 'own'){
+      const owned = VENDORS.find(v => v.owned);
+      if(owned){ openVendor(owned.id); return; }
+    }
     state.activeCat = id;
     renderCats();
+    updateHomePromosVisibility();
     renderVendors();
     window.scrollTo({top: 0, behavior: 'instant'});
+  }
+
+  // بيظهر بس في تبويب الرئيسية وفي فئة "الكل" — مش هيتكرر في صفحات متجرنا/مطاعم/ماركت... الخ
+  function updateHomePromosVisibility(){
+    const hp = document.getElementById('homePromos');
+    if(!hp) return;
+    const decorVisible = document.getElementById('homeDecor').style.display !== 'none';
+    hp.style.display = (decorVisible && state.activeCat === 'all') ? '' : 'none';
+  }
+  function openOwnedStore(){
+    const owned = VENDORS.find(v => v.owned);
+    if(owned) openVendor(owned.id);
+  }
+  function claimPromoCode(code){
+    const done = () => showToast(`تم نسخ الكود ${code} ✅ استخدمه عند الطلب`);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(done).catch(() => showToast(`الكود: ${code}`));
+    } else {
+      showToast(`الكود: ${code}`);
+    }
   }
 
   // ---------- Vendors ----------
@@ -1187,6 +1180,7 @@
     if(!v) return;
     currentVendorId = v.id;
     document.getElementById('homeDecor').style.display = 'none';
+    updateHomePromosVisibility();
     document.getElementById('browseSection').style.display = 'none';
     document.getElementById('vendorPageSection').style.display = 'block';
     document.getElementById('vpThumb').innerHTML = icon3d(v.ic, 34);
@@ -1255,6 +1249,7 @@
     currentVendorId = null;
     document.getElementById('vendorPageSection').style.display = 'none';
     document.getElementById('homeDecor').style.display = '';
+    updateHomePromosVisibility();
     document.getElementById('browseSection').style.display = '';
     window.scrollTo({top: 0, behavior: 'instant'});
   }
@@ -1529,6 +1524,7 @@
     document.getElementById('vendorPageSection').style.display = 'none';
     // زينة الصفحة الرئيسية (البانرات/الفئات/العروض) تظهر بس في تبويب الرئيسية، مش فوق طلباتي/المفضلة/حسابي
     document.getElementById('homeDecor').style.display = nav === 'home' ? '' : 'none';
+    updateHomePromosVisibility();
     document.getElementById('browseSection').style.display = '';
     document.getElementById('sortBar').style.display = nav === 'home' ? '' : 'none';
     if(nav === 'orders') renderOrdersView();
@@ -1794,6 +1790,7 @@
     document.getElementById('authScreen3').classList.remove('visible');
     document.getElementById('appShell').style.display = 'block';
     renderCats();
+    updateHomePromosVisibility();
     renderVendors();
     startVendorsListener();
     startAddressesListener();
