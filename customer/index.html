@@ -262,6 +262,29 @@
   }
   @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
   .sheet-handle{width:40px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 16px;}
+
+  /* ---------- Image viewer (lightbox) ---------- */
+  .img-viewer-overlay{
+    position:fixed; inset:0; background:rgba(15,10,20,.92); z-index:200;
+    display:none; align-items:center; justify-content:center; padding:20px;
+    animation:fadeIn .18s ease;
+  }
+  .img-viewer-overlay.open{display:flex;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .img-viewer-overlay img{
+    width:min(82vw, 380px); height:min(82vw, 380px); max-height:70vh; border-radius:16px; object-fit:contain;
+    box-shadow:0 10px 40px rgba(0,0,0,.5); background:#fff;
+  }
+  .img-viewer-close{
+    position:absolute; top:18px; left:18px; width:40px; height:40px; border-radius:50%;
+    background:rgba(255,255,255,.15); color:#fff; border:none; font-size:1.3rem;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .img-viewer-caption{
+    position:absolute; bottom:26px; right:20px; left:20px; text-align:center;
+    color:#fff; font-weight:800; font-size:1rem; text-shadow:0 2px 8px rgba(0,0,0,.6);
+  }
+  .mi-thumb{cursor:pointer;}
   .sheet h3{margin:0 0 4px;}
   .sheet .sub{font-size:.8rem; color:var(--muted); margin-bottom:16px;}
   .field-label{font-size:.8rem; font-weight:700; margin:14px 0 6px;}
@@ -654,6 +677,12 @@
   </div>
 </div>
 
+<div class="img-viewer-overlay" id="imgViewerOverlay" onclick="closeImageViewer(event)">
+  <button class="img-viewer-close" onclick="closeImageViewer(event)">✕</button>
+  <img id="imgViewerImg" src="" alt="">
+  <div class="img-viewer-caption" id="imgViewerCaption"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -812,6 +841,23 @@
   function productPhoto(name){
     const file = PRODUCT_PHOTO_MAP[name];
     return file ? `product-images/${file}` : null;
+  }
+  function productImageSrc(name, ic){
+    const photo = productPhoto(name);
+    if(photo) return photo;
+    const slug = ICON3D_MAP[ic];
+    return slug ? `icons3d/${slug}.png` : null;
+  }
+  function openImageViewer(src, title){
+    if(!src) return;
+    document.getElementById('imgViewerImg').src = src;
+    document.getElementById('imgViewerCaption').textContent = title || '';
+    document.getElementById('imgViewerOverlay').classList.add('open');
+  }
+  function closeImageViewer(e){
+    if(e) e.stopPropagation();
+    document.getElementById('imgViewerOverlay').classList.remove('open');
+    document.getElementById('imgViewerImg').src = '';
   }
   function icon3d(emoji, px){
     const slug = ICON3D_MAP[emoji];
@@ -1178,7 +1224,7 @@
       const qty = getQty(v.id, m.name);
       return `
       <div class="menu-item">
-        <div class="mi-thumb">${productPhoto(m.name) ? `<img class="mi-photo" src="${productPhoto(m.name)}" alt="" loading="lazy">` : icon3d(m.ic, 32)}</div>
+        <div class="mi-thumb" onclick="openImageViewer('${productImageSrc(m.name, m.ic) || ''}', '${m.name}')">${productPhoto(m.name) ? `<img class="mi-photo" src="${productPhoto(m.name)}" alt="" loading="lazy">` : icon3d(m.ic, 32)}</div>
         <div class="mi-info"><b>${m.name}</b><span>${m.price} ج.م</span></div>
         ${qty > 0
           ? `<div class="qty-pill"><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', -1)">−</button><span>${qty}</span><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button></div>`
@@ -1259,7 +1305,7 @@
     } else {
       linesEl.innerHTML = state.cart.map(l => `
         <div class="cart-line">
-          <div class="mi-thumb">${productPhoto(l.item) ? `<img class="mi-photo" src="${productPhoto(l.item)}" alt="" loading="lazy">` : icon3d(l.ic, 32)}</div>
+          <div class="mi-thumb" onclick="openImageViewer('${productImageSrc(l.item, l.ic) || ''}', '${l.item}')">${productPhoto(l.item) ? `<img class="mi-photo" src="${productPhoto(l.item)}" alt="" loading="lazy">` : icon3d(l.ic, 32)}</div>
           <div class="cl-info"><b>${l.item}</b><span>${l.vendorName}</span></div>
           <div class="qty-pill"><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', -1)">−</button><span>${l.qty}</span><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', 1)">+</button></div>
         </div>
