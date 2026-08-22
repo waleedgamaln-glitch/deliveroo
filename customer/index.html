@@ -278,7 +278,8 @@
   /* menu items inside vendor sheet */
   .menu-item{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
   .menu-item:last-child{border-bottom:none;}
-  .menu-item .mi-thumb{width:52px; height:52px; border-radius:12px; background:var(--paper-2); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;}
+  .menu-item .mi-thumb{width:52px; height:52px; border-radius:12px; background:var(--paper-2); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; overflow:hidden;}
+  .menu-item .mi-thumb img.mi-photo{width:100%; height:100%; object-fit:cover; display:block;}
   .menu-item .mi-info{flex:1;}
   .menu-item .mi-info b{display:block; font-size:.88rem;}
   .menu-item .mi-info span{font-size:.78rem; color:var(--muted);}
@@ -720,6 +721,39 @@
     '🍽️':'fork_and_knife_with_plate', '⭐':'star', '🌟':'glowing_star', '📱':'mobile_phone',
     '🎁':'wrapped_gift', '🏷️':'label',
   };
+  // ---------- صور واقعية حقيقية للمنتجات (بدل الأيقونات) للأصناف اللي عندنا صورة دقيقة ليها ----------
+  // مصادرها مفتوحة (Foodish — MIT license، وGroceryStoreDataset بتاع KTH — MIT license)، محفوظة محليًا
+  // في customer/product-images/. مقصود إننا مش بنحط صورة لكل صنف: منتجات الماركت الرسمي كلها
+  // بأسماء ماركات مصرية (جهينة/نستله/إيديتا...) ومفيش صور حقيقية دقيقة لعبواتها بالظبط متاحة لينا
+  // دلوقتي، فبدل ما نحط صورة غلط (ماركة تانية) سيبناها بالأيقونة ثلاثية الأبعاد اللي أدق.
+  const PRODUCT_PHOTO_MAP = {
+    'برجر لحم مزدوج': 'double-burger.jpg',
+    'بيتزا مارجريتا وسط': 'pizza-margherita.jpg',
+    'بيتزا بيبروني كبير': 'pizza-pepperoni.jpg',
+    'كيلو طماطم': 'tomato.jpg',
+    'كيلو موز': 'banana.jpg',
+    'كيلو خيار': 'cucumber.jpg',
+    // صور المنتجات الحقيقية دي جايه من موقع جهينة الرسمي (juhayna.com) — المستخدم بعت اللينكات ونزّلها بنفسه
+    'زبادي جهينة بالفاكهة': 'juhayna-yogurt-fruit.jpg',
+    'جهينة بريميوم بودينج': 'juhayna-pudding-premium.jpg',
+    'جهينة بودينج ميكس': 'juhayna-pudding-mix.jpg',
+    'الزبادي الكريمي جهينة': 'juhayna-yogurt-creamy.jpg',
+    'لبنة جهينة التركية': 'juhayna-labneh-turkish.jpg',
+    'جهينة بالمكسرات والحبوب (بديل لبن نباتي)': 'juhayna-nuts-grains.jpg',
+    'لبن جهينة كامل الدسم 1 لتر': 'juhayna-milk-full-cream.jpg',
+    'زبادي جهينة سادة': 'juhayna-yogurt-plain.jpg',
+    'زبادي جهينة يوناني': 'juhayna-yogurt-greek.jpg',
+    'زبادو جهينة (مشروب زبادي) فراولة': 'juhayna-zabado-strawberry.jpg',
+    'رايب جهينة': 'juhayna-rayeb.jpg',
+    'لبن جهينة مكس شوكولاتة': 'juhayna-mix-chocolate.jpg',
+    'هابي كيتشن كريمة طهي (جهينة)': 'juhayna-cooking-cream.jpg',
+    'عصير بخيرة تفاح (جهينة)': 'bekhero-juice-apple.jpg',
+    'لبن بخيرة (جهينة)': 'bekhero-milk.jpg',
+  };
+  function productPhoto(name){
+    const file = PRODUCT_PHOTO_MAP[name];
+    return file ? `product-images/${file}` : null;
+  }
   function icon3d(emoji, px){
     const slug = ICON3D_MAP[emoji];
     const size = px || 32;
@@ -1085,7 +1119,7 @@
       const qty = getQty(v.id, m.name);
       return `
       <div class="menu-item">
-        <div class="mi-thumb">${icon3d(m.ic, 32)}</div>
+        <div class="mi-thumb">${productPhoto(m.name) ? `<img class="mi-photo" src="${productPhoto(m.name)}" alt="" loading="lazy">` : icon3d(m.ic, 32)}</div>
         <div class="mi-info"><b>${m.name}</b><span>${m.price} ج.م</span></div>
         ${qty > 0
           ? `<div class="qty-pill"><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', -1)">−</button><span>${qty}</span><button onclick="changeQty('${v.id}', '${v.name}', '${m.name}', ${m.price}, '${m.ic}', 1)">+</button></div>`
@@ -1166,7 +1200,7 @@
     } else {
       linesEl.innerHTML = state.cart.map(l => `
         <div class="cart-line">
-          <div class="mi-thumb">${icon3d(l.ic, 32)}</div>
+          <div class="mi-thumb">${productPhoto(l.item) ? `<img class="mi-photo" src="${productPhoto(l.item)}" alt="" loading="lazy">` : icon3d(l.ic, 32)}</div>
           <div class="cl-info"><b>${l.item}</b><span>${l.vendorName}</span></div>
           <div class="qty-pill"><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', -1)">−</button><span>${l.qty}</span><button onclick="changeQty('${l.vendorId}', '${l.vendorName}', '${l.item}', ${l.price}, '${l.ic}', 1)">+</button></div>
         </div>
