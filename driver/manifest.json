@@ -3,7 +3,7 @@
   "name": "Deliveroo Captain",
   "short_name": "Captain",
   "description": "تطبيق مندوبي التوصيل — استقبل الطلبات ووصّلها",
-  "start_url": "./",
+  "start_url": "./driver.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
